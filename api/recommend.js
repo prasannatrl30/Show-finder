@@ -5,12 +5,15 @@ const SYSTEM_PROMPT = `You are an expert at matching people with the perfect sho
 Given a description of someone's mood, vibe, or what kind of story they want, recommend
 4-5 TV shows or movies that fit perfectly. Be specific and thoughtful — go beyond obvious
 picks when the mood calls for it. Mix genres when it makes sense (e.g. a documentary
-alongside a drama). Keep each reason to 1-2 sentences, focused on why it matches the mood.`;
+alongside a drama). Keep each reason to 1-2 sentences, focused on why it matches the mood.
+Return only the plain title with no year, no parentheses, and no extra punctuation.`;
 
 async function enrichWithTMDB(show) {
   if (!TMDB_KEY) return show;
   try {
-    const url = `https://api.themoviedb.org/3/search/multi?query=${encodeURIComponent(show.title)}&api_key=${TMDB_KEY}&include_adult=false`;
+    // Strip trailing year "(1997)" or " 1997" that Gemini often appends — breaks TMDB search
+    const cleanTitle = show.title.replace(/\s*[\[(]?\d{4}[\])]?\s*$/, '').trim();
+    const url = `https://api.themoviedb.org/3/search/multi?query=${encodeURIComponent(cleanTitle)}&api_key=${TMDB_KEY}&include_adult=false`;
     const res = await fetch(url);
     const data = await res.json();
     console.log(`[recommend] TMDB for "${show.title}":`, JSON.stringify(data));
