@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Show Finder</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0f;
+      --surface: #18181c;
+      --surface2: #222228;
+      --border: #2e2e38;
+      --accent: #7c5cfc;
+      --accent-glow: rgba(124, 92, 252, 0.25);
+      --text: #e8e8f0;
+      --muted: #7b7b8f;
+      --success: #4ade80;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 3rem 1.5rem 5rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+      max-width: 560px;
+    }
+
+    .eyebrow {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.9rem;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 2.8rem);
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #e8e8f0 30%, #9d88fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.75rem;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 620px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+      letter-spacing: 0.02em;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 130px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.97rem;
+      line-height: 1.6;
+      padding: 0.9rem 1rem;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    textarea::placeholder { color: var(--muted); opacity: 0.6; }
+
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    button[type="submit"] {
+      margin-top: 1.1rem;
+      width: 100%;
+      padding: 0.85rem 1.5rem;
+      background: var(--accent);
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      letter-spacing: 0.01em;
+      transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+
+    button[type="submit"]:hover { opacity: 0.88; box-shadow: 0 6px 28px var(--accent-glow); }
+    button[type="submit"]:active { transform: scale(0.98); }
+    button[type="submit"]:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+    /* Results */
+    #results {
+      width: 100%;
+      max-width: 620px;
+      margin-top: 2rem;
+    }
+
+    .results-heading {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .show-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .show-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.1rem 1.3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      animation: fadeUp 0.35s ease both;
+    }
+
+    .show-card:nth-child(2) { animation-delay: 0.06s; }
+    .show-card:nth-child(3) { animation-delay: 0.12s; }
+    .show-card:nth-child(4) { animation-delay: 0.18s; }
+    .show-card:nth-child(5) { animation-delay: 0.24s; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .show-title {
+      font-weight: 650;
+      font-size: 1rem;
+      color: var(--text);
+    }
+
+    .show-meta {
+      font-size: 0.78rem;
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .show-reason {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.55;
+      margin-top: 0.15rem;
+    }
+
+    .error-msg {
+      color: #f87171;
+      font-size: 0.9rem;
+      padding: 1rem;
+      background: rgba(248, 113, 113, 0.08);
+      border: 1px solid rgba(248, 113, 113, 0.2);
+      border-radius: 10px;
+      animation: fadeUp 0.3s ease;
+    }
+
+    .spinner {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      color: var(--muted);
+      font-size: 0.88rem;
+      padding: 0.5rem 0;
+    }
+
+    .spinner svg {
+      animation: spin 0.9s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* raw text fallback */
+    .raw-response {
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: var(--text);
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <p class="eyebrow">Powered by AI</p>
+    <h1>What do you feel like watching?</h1>
+    <p class="subtitle">Describe your mood, vibe, or what kind of story you're craving — and we'll find the perfect show.</p>
+  </header>
+
+  <div class="card">
+    <form id="moodForm">
+      <label for="mood">Describe your mood or what sounds good right now</label>
+      <textarea
+        id="mood"
+        name="mood"
+        placeholder="e.g. I want something cozy but with a little mystery. Maybe slow-burn, set somewhere cold and atmospheric…"
+        required
+      ></textarea>
+      <button type="submit" id="submitBtn">Find Shows</button>
+    </form>
+  </div>
+
+  <section id="results" hidden></section>
+
+  <script>
+    const form = document.getElementById('moodForm');
+    const resultsEl = document.getElementById('results');
+    const submitBtn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const mood = document.getElementById('mood').value.trim();
+      if (!mood) return;
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Finding shows…';
+      resultsEl.hidden = false;
+      resultsEl.innerHTML = `
+        <div class="spinner">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+          </svg>
+          Thinking about what to watch…
+        </div>`;
+
+      try {
+        const res = await fetch('/api/recommend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mood }),
+        });
+
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+
+        const data = await res.json();
+        renderResults(data);
+      } catch (err) {
+        resultsEl.innerHTML = `<div class="error-msg">Something went wrong: ${err.message}</div>`;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Find Shows';
+      }
+    });
+
+    function renderResults(data) {
+      // Accept: { recommendations: [{title, genre, reason}] }
+      // or:    { shows: [...] }
+      // or:    { message: "..." }  (raw text fallback)
+      const shows = data.recommendations ?? data.shows ?? null;
+
+      if (shows && Array.isArray(shows) && shows.length > 0) {
+        resultsEl.innerHTML = `
+          <p class="results-heading">Recommended for you</p>
+          <div class="show-list">
+            ${shows.map(s => `
+              <div class="show-card">
+                <span class="show-title">${escHtml(s.title ?? s.name ?? 'Untitled')}</span>
+                ${s.genre || s.type ? `<span class="show-meta">${escHtml(s.genre ?? s.type ?? '')}</span>` : ''}
+                ${s.reason || s.description ? `<p class="show-reason">${escHtml(s.reason ?? s.description ?? '')}</p>` : ''}
+              </div>`).join('')}
+          </div>`;
+      } else if (data.message || data.text || typeof data === 'string') {
+        const text = data.message ?? data.text ?? data;
+        resultsEl.innerHTML = `<p class="raw-response">${escHtml(text)}</p>`;
+      } else {
+        resultsEl.innerHTML = `<p class="raw-response">${escHtml(JSON.stringify(data, null, 2))}</p>`;
+      }
+    }
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+  </script>
+
+</body>
+</html>
