@@ -1,5 +1,5 @@
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${process.env.GEMINI_API_KEY}`;
-const OMDB_KEY = process.env.OMDB_API_KEY;
+const TMDB_KEY = process.env.TMDB_API_KEY;
 
 const SYSTEM_PROMPT = `You are an expert at matching people with the perfect show or film to watch.
 Given a description of someone's mood, vibe, or what kind of story they want, recommend
@@ -7,24 +7,26 @@ Given a description of someone's mood, vibe, or what kind of story they want, re
 picks when the mood calls for it. Mix genres when it makes sense (e.g. a documentary
 alongside a drama). Keep each reason to 1-2 sentences, focused on why it matches the mood.`;
 
-async function enrichWithOMDB(show) {
-  if (!OMDB_KEY) return show;
+async function enrichWithTMDB(show) {
+  if (!TMDB_KEY) return show;
   try {
-    const url = `https://www.omdbapi.com/?apikey=${OMDB_KEY}&t=${encodeURIComponent(show.title)}&plot=short`;
+    const url = `https://api.themoviedb.org/3/search/multi?query=${encodeURIComponent(show.title)}&api_key=${TMDB_KEY}&include_adult=false`;
     const res = await fetch(url);
     const data = await res.json();
-    console.log(`[recommend] OMDB for "${show.title}":`, JSON.stringify(data));
-    if (data.Response === 'True') {
+    console.log(`[recommend] TMDB for "${show.title}":`, JSON.stringify(data));
+
+    const result = data.results?.[0];
+    if (result) {
       return {
         ...show,
-        poster:      data.Poster      && data.Poster      !== 'N/A' ? data.Poster      : null,
-        imdbRating:  data.imdbRating  && data.imdbRating  !== 'N/A' ? data.imdbRating  : null,
-        year:        data.Year        && data.Year        !== 'N/A' ? data.Year        : null,
-        mediaType:   data.Type        && data.Type        !== 'N/A' ? data.Type        : null,
+        poster:    result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}` : null,
+        imdbRating: result.vote_average ? result.vote_average.toFixed(1) : null,
+        year:      (result.release_date ?? result.first_air_date ?? '').slice(0, 4) || null,
+        mediaType: result.media_type === 'tv' ? 'series' : result.media_type === 'movie' ? 'movie' : null,
       };
     }
   } catch (e) {
-    console.error('[recommend] OMDB lookup failed for', show.title, e?.message);
+    console.error('[recommend] TMDB lookup failed for', show.title, e?.message);
   }
   return show;
 }
@@ -88,7 +90,7 @@ export default async function handler(req, res) {
     if (!text) throw new Error('Empty response from Gemini');
 
     const parsed = JSON.parse(text);
-    const enriched = await Promise.all(parsed.recommendations.map(enrichWithOMDB));
+    const enriched = await Promise.all(parsed.recommendations.map(enrichWithTMDB));
     res.json({ recommendations: enriched });
   } catch (err) {
     console.error('Recommendation error:', err?.message ?? err);
