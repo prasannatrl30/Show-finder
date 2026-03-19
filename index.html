@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    [hidden] { display: none !important; }
 
     :root {
       --bg: #0e0c0a;
@@ -204,11 +205,7 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    .compact-icon { color: var(--accent); flex-shrink: 0; }
-
-    .compact-text-wrap { flex: 1; min-width: 0; }
-    .compact-label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; }
-    .compact-query { font-size: 0.9rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .compact-query { flex: 1; min-width: 0; font-size: 0.9rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     .compact-edit-btn {
       flex-shrink: 0;
@@ -468,14 +465,8 @@
 
     <!-- Compact bar — shown when results are displayed -->
     <div id="compactBar" class="compact-bar" hidden>
-      <svg class="compact-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-      </svg>
-      <div class="compact-text-wrap">
-        <div class="compact-label">Searching for</div>
-        <div id="compactQueryText" class="compact-query"></div>
-      </div>
-      <button id="newSearchBtn" class="compact-edit-btn">New search</button>
+      <div id="compactQueryText" class="compact-query"></div>
+      <button id="newSearchBtn" class="compact-edit-btn">Edit</button>
     </div>
 
     <!-- Results -->
