@@ -15,7 +15,7 @@ picks when the mood calls for it. Mix genres when it makes sense (e.g. a documen
 alongside a drama). Keep each reason to 1-2 sentences, focused on why it matches the mood.`;
 
 app.use(express.json());
-app.use(express.static(__dirname));
+app.use(express.static(`${__dirname}/public`));
 
 app.post('/api/recommend', async (req, res) => {
   const { mood } = req.body ?? {};
