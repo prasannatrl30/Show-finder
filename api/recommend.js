@@ -9,14 +9,18 @@ alongside a drama). Keep each reason to 1-2 sentences, focused on why it matches
 Return only the plain title with no year, no parentheses, and no extra punctuation.`;
 
 async function enrichWithTMDB(show) {
-  if (!TMDB_KEY) return show;
+  if (!TMDB_KEY) {
+    console.log('[recommend] TMDB_KEY not set — skipping enrichment');
+    return show;
+  }
   try {
     // Strip trailing year "(1997)" or " 1997" that Gemini often appends — breaks TMDB search
     const cleanTitle = show.title.replace(/\s*[\[(]?\d{4}[\])]?\s*$/, '').trim();
     const url = `https://api.themoviedb.org/3/search/multi?query=${encodeURIComponent(cleanTitle)}&api_key=${TMDB_KEY}&include_adult=false`;
+    console.log(`[recommend] TMDB fetching: ${url.replace(TMDB_KEY, '***')}`);
     const res = await fetch(url);
     const data = await res.json();
-    console.log(`[recommend] TMDB for "${show.title}":`, JSON.stringify(data));
+    console.log(`[recommend] TMDB for "${show.title}": status=${res.status} results=${data.results?.length ?? 0} first_poster=${data.results?.[0]?.poster_path ?? 'none'}`);
 
     const result = data.results?.[0];
     if (result) {
