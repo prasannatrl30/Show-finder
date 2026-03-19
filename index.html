@@ -35,15 +35,12 @@
       align-items: center;
     }
 
-    /* Ambient background glow */
     body::before {
       content: '';
       position: fixed;
-      top: -20vh;
-      left: 50%;
+      top: -20vh; left: 50%;
       transform: translateX(-50%);
-      width: 80vw;
-      height: 60vh;
+      width: 80vw; height: 60vh;
       background: radial-gradient(ellipse, rgba(212, 144, 58, 0.06) 0%, transparent 70%);
       pointer-events: none;
       z-index: 0;
@@ -53,13 +50,33 @@
       position: relative;
       z-index: 1;
       width: 100%;
+      max-width: 1020px;
       display: flex;
       flex-direction: column;
       align-items: center;
       padding: 5rem 1.5rem 6rem;
+      gap: 0;
     }
 
-    /* Header */
+    /* ─── SEARCH FULL ─── */
+    #searchFull {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: opacity 0.28s ease, transform 0.28s ease;
+    }
+    #searchFull.fading-out {
+      opacity: 0;
+      transform: translateY(-10px);
+      pointer-events: none;
+    }
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    #searchFull.fading-in { animation: fadeInDown 0.32s ease both; }
+
     header {
       text-align: center;
       max-width: 580px;
@@ -81,28 +98,17 @@
       padding: 0.3rem 0.8rem;
       margin-bottom: 1.5rem;
     }
-
-    .badge-dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: var(--accent);
-    }
+    .badge-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
 
     h1 {
       font-family: 'DM Serif Display', Georgia, serif;
       font-size: clamp(2.4rem, 6vw, 3.8rem);
       font-weight: 400;
       line-height: 1.1;
-      letter-spacing: -0.01em;
       color: var(--text);
       margin-bottom: 1.1rem;
     }
-
-    h1 em {
-      font-style: italic;
-      color: var(--accent);
-    }
+    h1 em { font-style: italic; color: var(--accent); }
 
     .subtitle {
       color: var(--muted-light);
@@ -112,28 +118,17 @@
       margin: 0 auto;
     }
 
-    /* Divider */
-    .divider {
-      width: 40px;
-      height: 1px;
-      background: var(--border-light);
-      margin: 1.5rem auto 0;
-    }
+    .divider { width: 40px; height: 1px; background: var(--border-light); margin: 1.5rem auto 0; }
 
-    /* Form card */
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 20px;
-      padding: 0;
       width: 100%;
       max-width: 640px;
       overflow: hidden;
     }
-
-    .card-body {
-      padding: 1.8rem 2rem;
-    }
+    .card-body { padding: 1.8rem 2rem; }
 
     label {
       display: block;
@@ -157,11 +152,7 @@
       resize: none;
       outline: none;
     }
-
-    textarea::placeholder {
-      color: var(--muted);
-      font-style: italic;
-    }
+    textarea::placeholder { color: var(--muted); font-style: italic; }
 
     .card-footer {
       border-top: 1px solid var(--border);
@@ -171,11 +162,7 @@
       justify-content: space-between;
       gap: 1rem;
     }
-
-    .footer-hint {
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
+    .footer-hint { font-size: 0.8rem; color: var(--muted); }
 
     button[type="submit"] {
       flex-shrink: 0;
@@ -188,165 +175,260 @@
       border: none;
       border-radius: 10px;
       cursor: pointer;
-      letter-spacing: 0.01em;
       transition: opacity 0.15s, transform 0.1s, box-shadow 0.15s;
       box-shadow: 0 2px 12px var(--accent-glow);
       display: flex;
       align-items: center;
       gap: 0.45rem;
     }
-
-    button[type="submit"]:hover {
-      opacity: 0.9;
-      box-shadow: 0 4px 20px var(--accent-glow);
-    }
+    button[type="submit"]:hover  { opacity: 0.9; box-shadow: 0 4px 20px var(--accent-glow); }
     button[type="submit"]:active { transform: scale(0.97); }
     button[type="submit"]:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-arrow { font-size: 1.05em; line-height: 1; }
 
-    .btn-arrow {
-      font-size: 1.05em;
-      line-height: 1;
-    }
-
-    /* Results */
-    #results {
+    /* ─── COMPACT BAR ─── */
+    .compact-bar {
       width: 100%;
-      max-width: 640px;
-      margin-top: 2.5rem;
-    }
-
-    .results-header {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 0.8rem 1.2rem;
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 1.25rem;
+      gap: 0.9rem;
+      margin-bottom: 1.75rem;
+      animation: slideDown 0.32s cubic-bezier(0.4, 0, 0.2, 1) both;
     }
-
-    .results-label {
-      font-size: 0.72rem;
-      font-weight: 600;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .results-line {
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-
-    .show-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-    }
-
-    .show-card {
-      background: var(--surface);
-      padding: 1.3rem 1.6rem;
-      display: grid;
-      grid-template-columns: 2rem 1fr;
-      gap: 0 1rem;
-      align-items: start;
-      border-bottom: 1px solid var(--border);
-      animation: fadeIn 0.4s ease both;
-      transition: background 0.15s;
-    }
-
-    .show-card:last-child { border-bottom: none; }
-
-    .show-card:nth-child(2) { animation-delay: 0.07s; }
-    .show-card:nth-child(3) { animation-delay: 0.14s; }
-    .show-card:nth-child(4) { animation-delay: 0.21s; }
-    .show-card:nth-child(5) { animation-delay: 0.28s; }
-
-    .show-card:hover { background: var(--surface2); }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    .show-num {
-      font-family: 'DM Serif Display', Georgia, serif;
-      font-size: 1.1rem;
-      font-style: italic;
-      color: var(--muted);
-      padding-top: 0.1rem;
-      line-height: 1.4;
+    .compact-icon { color: var(--accent); flex-shrink: 0; }
+
+    .compact-text-wrap { flex: 1; min-width: 0; }
+    .compact-label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; }
+    .compact-query { font-size: 0.9rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .compact-edit-btn {
+      flex-shrink: 0;
+      background: none;
+      border: 1px solid var(--border-light);
+      color: var(--muted-light);
+      font-family: inherit;
+      font-size: 0.78rem;
+      padding: 0.38rem 0.8rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .compact-edit-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ─── RESULTS ─── */
+    #results { width: 100%; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
-    .show-content { display: flex; flex-direction: column; gap: 0.25rem; }
+    /* Toolbar */
+    .results-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.9rem;
+      gap: 1rem;
+    }
+    .results-count { font-size: 0.8rem; color: var(--muted); font-weight: 500; }
 
-    .show-title {
-      font-weight: 600;
-      font-size: 0.97rem;
-      color: var(--text);
-      line-height: 1.4;
+    .toolbar-right { display: flex; align-items: center; gap: 0.4rem; }
+
+    .view-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      width: 34px; height: 34px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    .view-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+    .view-btn:hover:not(.active) { border-color: var(--border-light); color: var(--text-dim); }
+
+    /* Filter chips */
+    .filter-row {
+      display: flex;
+      gap: 0.45rem;
+      overflow-x: auto;
+      padding-bottom: 0.25rem;
+      margin-bottom: 1.25rem;
+      scrollbar-width: none;
+    }
+    .filter-row::-webkit-scrollbar { display: none; }
+
+    .chip {
+      flex-shrink: 0;
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 500;
+      padding: 0.32rem 0.8rem;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      background: none;
+      color: var(--muted-light);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .chip:hover { border-color: var(--border-light); color: var(--text); }
+    .chip.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+    /* ─── CARD POSTER (shared) ─── */
+    .card-poster {
+      position: relative;
+      background: var(--surface2);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .card-poster img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      z-index: 1;
+    }
+    .card-poster.no-img img { display: none; }
+    .poster-placeholder {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(160deg, var(--surface2) 0%, #1a1208 100%);
+    }
+    .ph-num {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-style: italic;
+      color: var(--accent);
+      opacity: 0.35;
+    }
+
+    /* Card info (shared) */
+    .card-info { display: flex; flex-direction: column; gap: 0.28rem; flex: 1; }
+
+    .card-meta-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 0.4rem;
     }
 
     .show-meta {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       color: var(--accent);
       font-weight: 500;
       letter-spacing: 0.04em;
       text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .show-reason {
-      font-size: 0.87rem;
-      color: var(--text-dim);
-      line-height: 1.6;
-      margin-top: 0.2rem;
-    }
-
-    /* Spinner */
-    .spinner {
-      display: flex;
+    .imdb-badge {
+      flex-shrink: 0;
+      display: inline-flex;
       align-items: center;
-      gap: 0.65rem;
-      color: var(--muted-light);
-      font-size: 0.9rem;
-      padding: 1.5rem 0;
+      gap: 0.18rem;
+      background: rgba(212, 144, 58, 0.12);
+      border: 1px solid rgba(212, 144, 58, 0.22);
+      color: var(--accent);
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.12rem 0.4rem;
+      border-radius: 4px;
+      white-space: nowrap;
     }
 
+    .show-title {
+      font-weight: 600;
+      font-size: 0.92rem;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .show-year { font-size: 0.72rem; color: var(--muted); }
+    .show-reason { font-size: 0.82rem; color: var(--text-dim); line-height: 1.55; margin-top: 0.15rem; }
+
+    /* ─── GRID VIEW ─── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+      gap: 1rem;
+    }
+    .cards-grid .show-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.15s, transform 0.18s;
+      animation: fadeUp 0.4s ease both;
+    }
+    .cards-grid .show-card:hover { border-color: var(--border-light); transform: translateY(-3px); }
+    .cards-grid .show-card:nth-child(2) { animation-delay: 0.07s; }
+    .cards-grid .show-card:nth-child(3) { animation-delay: 0.14s; }
+    .cards-grid .show-card:nth-child(4) { animation-delay: 0.21s; }
+    .cards-grid .show-card:nth-child(5) { animation-delay: 0.28s; }
+
+    .cards-grid .card-poster { aspect-ratio: 2 / 3; width: 100%; }
+    .cards-grid .ph-num { font-size: 2.4rem; }
+    .cards-grid .card-info { padding: 0.85rem 0.95rem; }
+
+    /* ─── LIST VIEW ─── */
+    .cards-list {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .cards-list .show-card {
+      background: var(--surface);
+      display: flex;
+      flex-direction: row;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+      animation: fadeUp 0.4s ease both;
+    }
+    .cards-list .show-card:last-child { border-bottom: none; }
+    .cards-list .show-card:hover { background: var(--surface2); }
+    .cards-list .show-card:nth-child(2) { animation-delay: 0.07s; }
+    .cards-list .show-card:nth-child(3) { animation-delay: 0.14s; }
+    .cards-list .show-card:nth-child(4) { animation-delay: 0.21s; }
+    .cards-list .show-card:nth-child(5) { animation-delay: 0.28s; }
+
+    .cards-list .card-poster { width: 88px; align-self: stretch; }
+    .cards-list .ph-num { font-size: 1.6rem; }
+    .cards-list .card-info { padding: 1rem 1.25rem; }
+
+    /* ─── SPINNER / ERROR ─── */
+    .spinner {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0.65rem; color: var(--muted-light); font-size: 0.9rem; padding: 3rem 0;
+    }
     .spinner-ring {
-      width: 18px;
-      height: 18px;
+      width: 18px; height: 18px;
       border: 2px solid var(--border-light);
       border-top-color: var(--accent);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
       flex-shrink: 0;
     }
-
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Error */
     .error-msg {
-      color: #e87171;
-      font-size: 0.88rem;
-      padding: 1rem 1.25rem;
+      color: #e87171; font-size: 0.88rem; padding: 1rem 1.25rem;
       background: rgba(232, 113, 113, 0.06);
       border: 1px solid rgba(232, 113, 113, 0.18);
       border-radius: 12px;
-      animation: fadeIn 0.3s ease;
-    }
-
-    /* Raw fallback */
-    .raw-response {
-      font-size: 0.9rem;
-      line-height: 1.7;
-      color: var(--text-dim);
-      white-space: pre-wrap;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.25rem 1.5rem;
+      animation: fadeUp 0.3s ease;
     }
   </style>
 </head>
@@ -354,41 +436,91 @@
 
   <div class="page-inner">
 
-    <header>
-      <div class="badge"><span class="badge-dot"></span>AI-powered discovery</div>
-      <h1>What do you feel<br>like <em>watching?</em></h1>
-      <p class="subtitle">Describe your mood, the vibe you're after, or a story you're craving — and we'll find something perfect.</p>
-      <div class="divider"></div>
-    </header>
+    <!-- Full search section -->
+    <div id="searchFull">
+      <header>
+        <div class="badge"><span class="badge-dot"></span>AI-powered discovery</div>
+        <h1>What do you feel<br>like <em>watching?</em></h1>
+        <p class="subtitle">Describe your mood, the vibe you're after, or a story you're craving — and we'll find something perfect.</p>
+        <div class="divider"></div>
+      </header>
 
-    <div class="card">
-      <form id="moodForm">
-        <div class="card-body">
-          <label for="mood">Your mood or craving</label>
-          <textarea
-            id="mood"
-            name="mood"
-            placeholder="Something slow and atmospheric, maybe set in Scandinavia. I want to feel a little unsettled but not scared…"
-            required
-          ></textarea>
-        </div>
-        <div class="card-footer">
-          <span class="footer-hint">Be as specific or vague as you like</span>
-          <button type="submit" id="submitBtn">
-            Find Shows <span class="btn-arrow">→</span>
-          </button>
-        </div>
-      </form>
+      <div class="card">
+        <form id="moodForm">
+          <div class="card-body">
+            <label for="mood">Your mood or craving</label>
+            <textarea
+              id="mood"
+              name="mood"
+              placeholder="Something slow and atmospheric, maybe set in Scandinavia. I want to feel a little unsettled but not scared…"
+              required
+            ></textarea>
+          </div>
+          <div class="card-footer">
+            <span class="footer-hint">Be as specific or vague as you like</span>
+            <button type="submit" id="submitBtn">
+              Find Shows <span class="btn-arrow">→</span>
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
 
+    <!-- Compact bar — shown when results are displayed -->
+    <div id="compactBar" class="compact-bar" hidden>
+      <svg class="compact-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <div class="compact-text-wrap">
+        <div class="compact-label">Searching for</div>
+        <div id="compactQueryText" class="compact-query"></div>
+      </div>
+      <button id="newSearchBtn" class="compact-edit-btn">New search</button>
+    </div>
+
+    <!-- Results -->
     <section id="results" hidden></section>
 
   </div>
 
   <script>
-    const form = document.getElementById('moodForm');
-    const resultsEl = document.getElementById('results');
-    const submitBtn = document.getElementById('submitBtn');
+    const form           = document.getElementById('moodForm');
+    const resultsEl      = document.getElementById('results');
+    const submitBtn      = document.getElementById('submitBtn');
+    const searchFull     = document.getElementById('searchFull');
+    const compactBar     = document.getElementById('compactBar');
+    const compactQueryText = document.getElementById('compactQueryText');
+    const newSearchBtn   = document.getElementById('newSearchBtn');
+
+    let allShows    = [];
+    let activeChip  = 'all';
+    let currentView = 'grid';
+
+    // ── Collapse / expand search ──
+
+    function collapseSearch(moodText) {
+      compactQueryText.textContent = moodText;
+      searchFull.classList.add('fading-out');
+      setTimeout(() => {
+        searchFull.hidden = true;
+        searchFull.classList.remove('fading-out');
+        compactBar.hidden = false;
+      }, 280);
+    }
+
+    function expandSearch() {
+      compactBar.hidden = true;
+      resultsEl.hidden = true;
+      resultsEl.innerHTML = '';
+      allShows = [];
+      searchFull.hidden = false;
+      searchFull.classList.add('fading-in');
+      setTimeout(() => searchFull.classList.remove('fading-in'), 350);
+    }
+
+    newSearchBtn.addEventListener('click', expandSearch);
+
+    // ── Form submit ──
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -404,6 +536,8 @@
           Finding the right shows for your mood…
         </div>`;
 
+      collapseSearch(mood);
+
       try {
         const res = await fetch('/api/recommend', {
           method: 'POST',
@@ -414,7 +548,10 @@
         if (!res.ok) throw new Error(`Server error: ${res.status}`);
 
         const data = await res.json();
-        renderResults(data);
+        allShows   = data.recommendations ?? data.shows ?? [];
+        activeChip = 'all';
+        currentView = 'grid';
+        renderResults();
       } catch (err) {
         resultsEl.innerHTML = `<div class="error-msg">Something went wrong: ${err.message}</div>`;
       } finally {
@@ -423,40 +560,106 @@
       }
     });
 
-    function renderResults(data) {
-      const shows = data.recommendations ?? data.shows ?? null;
+    // ── Filters ──
 
-      if (shows && Array.isArray(shows) && shows.length > 0) {
-        resultsEl.innerHTML = `
-          <div class="results-header">
-            <span class="results-label">Recommended for you</span>
-            <div class="results-line"></div>
-          </div>
-          <div class="show-list">
-            ${shows.map((s, i) => `
-              <div class="show-card">
-                <span class="show-num">${i + 1}</span>
-                <div class="show-content">
-                  <span class="show-title">${escHtml(s.title ?? s.name ?? 'Untitled')}</span>
-                  ${s.genre || s.type ? `<span class="show-meta">${escHtml(s.genre ?? s.type ?? '')}</span>` : ''}
-                  ${s.reason || s.description ? `<p class="show-reason">${escHtml(s.reason ?? s.description ?? '')}</p>` : ''}
-                </div>
-              </div>`).join('')}
-          </div>`;
-      } else if (data.message || data.text || typeof data === 'string') {
-        const text = data.message ?? data.text ?? data;
-        resultsEl.innerHTML = `<p class="raw-response">${escHtml(text)}</p>`;
-      } else {
-        resultsEl.innerHTML = `<p class="raw-response">${escHtml(JSON.stringify(data, null, 2))}</p>`;
+    function buildChips(shows) {
+      const genres = [...new Set(shows.map(s => s.genre).filter(Boolean))];
+      const types  = [...new Set(shows.map(s => s.mediaType).filter(Boolean))];
+      const chips  = ['all', ...genres];
+      if (types.includes('movie') && types.includes('series')) {
+        chips.push('__movies', '__series');
       }
+      return chips;
+    }
+
+    function chipLabel(chip) {
+      if (chip === 'all')      return 'All';
+      if (chip === '__movies') return 'Movies';
+      if (chip === '__series') return 'TV Shows';
+      return chip;
+    }
+
+    function filteredShows() {
+      if (activeChip === 'all')      return allShows;
+      if (activeChip === '__movies') return allShows.filter(s => s.mediaType === 'movie');
+      if (activeChip === '__series') return allShows.filter(s => s.mediaType === 'series');
+      return allShows.filter(s => s.genre === activeChip);
+    }
+
+    // ── Render ──
+
+    function renderResults() {
+      if (!allShows.length) {
+        resultsEl.innerHTML = '<div class="error-msg">No results found.</div>';
+        return;
+      }
+
+      const chips = buildChips(allShows);
+      const shown = filteredShows();
+
+      resultsEl.innerHTML = `
+        <div class="results-toolbar">
+          <span class="results-count">${shown.length} recommendation${shown.length !== 1 ? 's' : ''}</span>
+          <div class="toolbar-right">
+            <button class="view-btn ${currentView === 'list' ? 'active' : ''}" id="viewList" title="List view" aria-label="List view">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+                <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+              </svg>
+            </button>
+            <button class="view-btn ${currentView === 'grid' ? 'active' : ''}" id="viewGrid" title="Grid view" aria-label="Grid view">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        ${chips.length > 1 ? `
+        <div class="filter-row">
+          ${chips.map(c => `
+            <button class="chip ${c === activeChip ? 'active' : ''}" data-chip="${escAttr(c)}">
+              ${escHtml(chipLabel(c))}
+            </button>`).join('')}
+        </div>` : ''}
+
+        <div id="showContainer" class="${currentView === 'grid' ? 'cards-grid' : 'cards-list'}">
+          ${shown.map((s, i) => renderCard(s, i)).join('')}
+        </div>`;
+
+      document.getElementById('viewList')?.addEventListener('click', () => { currentView = 'list'; renderResults(); });
+      document.getElementById('viewGrid')?.addEventListener('click', () => { currentView = 'grid'; renderResults(); });
+      document.querySelectorAll('.chip').forEach(btn => {
+        btn.addEventListener('click', () => { activeChip = btn.dataset.chip; renderResults(); });
+      });
+    }
+
+    function renderCard(s, i) {
+      const hasPoster = !!s.poster;
+      return `
+        <div class="show-card">
+          <div class="card-poster${hasPoster ? '' : ' no-img'}">
+            <div class="poster-placeholder"><span class="ph-num">${i + 1}</span></div>
+            ${hasPoster ? `<img src="${escAttr(s.poster)}" alt="${escAttr(s.title ?? '')}" loading="lazy" onerror="this.closest('.card-poster').classList.add('no-img')">` : ''}
+          </div>
+          <div class="card-info">
+            <div class="card-meta-row">
+              ${s.genre ? `<span class="show-meta">${escHtml(s.genre)}</span>` : '<span></span>'}
+              ${s.imdbRating ? `<span class="imdb-badge">★ ${escHtml(s.imdbRating)}</span>` : ''}
+            </div>
+            <span class="show-title">${escHtml(s.title ?? s.name ?? 'Untitled')}</span>
+            ${s.year ? `<span class="show-year">${escHtml(s.year)}</span>` : ''}
+            ${s.reason ? `<p class="show-reason">${escHtml(s.reason)}</p>` : ''}
+          </div>
+        </div>`;
     }
 
     function escHtml(str) {
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function escAttr(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
     }
   </script>
 

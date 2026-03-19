@@ -1,10 +1,33 @@
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${process.env.GEMINI_API_KEY}`;
+const OMDB_KEY = process.env.OMDB_API_KEY;
 
 const SYSTEM_PROMPT = `You are an expert at matching people with the perfect show or film to watch.
 Given a description of someone's mood, vibe, or what kind of story they want, recommend
 4-5 TV shows or movies that fit perfectly. Be specific and thoughtful — go beyond obvious
 picks when the mood calls for it. Mix genres when it makes sense (e.g. a documentary
 alongside a drama). Keep each reason to 1-2 sentences, focused on why it matches the mood.`;
+
+async function enrichWithOMDB(show) {
+  if (!OMDB_KEY) return show;
+  try {
+    const url = `https://www.omdbapi.com/?apikey=${OMDB_KEY}&t=${encodeURIComponent(show.title)}&plot=short`;
+    const res = await fetch(url);
+    const data = await res.json();
+    console.log(`[recommend] OMDB for "${show.title}":`, JSON.stringify(data));
+    if (data.Response === 'True') {
+      return {
+        ...show,
+        poster:      data.Poster      && data.Poster      !== 'N/A' ? data.Poster      : null,
+        imdbRating:  data.imdbRating  && data.imdbRating  !== 'N/A' ? data.imdbRating  : null,
+        year:        data.Year        && data.Year        !== 'N/A' ? data.Year        : null,
+        mediaType:   data.Type        && data.Type        !== 'N/A' ? data.Type        : null,
+      };
+    }
+  } catch (e) {
+    console.error('[recommend] OMDB lookup failed for', show.title, e?.message);
+  }
+  return show;
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -64,7 +87,9 @@ export default async function handler(req, res) {
     const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!text) throw new Error('Empty response from Gemini');
 
-    res.json(JSON.parse(text));
+    const parsed = JSON.parse(text);
+    const enriched = await Promise.all(parsed.recommendations.map(enrichWithOMDB));
+    res.json({ recommendations: enriched });
   } catch (err) {
     console.error('Recommendation error:', err?.message ?? err);
     res.status(500).json({ error: 'Failed to get recommendations. Please try again.' });
