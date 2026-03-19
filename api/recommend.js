@@ -1,4 +1,4 @@
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${process.env.GEMINI_API_KEY}`;
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-04-17:generateContent?key=${process.env.GEMINI_API_KEY}`;
 const TMDB_KEY = process.env.TMDB_API_KEY;
 
 const SYSTEM_PROMPT = `You are an expert at matching people with the perfect show or film to watch. You have deep knowledge of global cinema — Hollywood, Bollywood, Korean, Tamil, Japanese, French, and beyond. If the user does not specify a language or region, recommend the best match from anywhere in the world. If they do specify one, stay within it.
