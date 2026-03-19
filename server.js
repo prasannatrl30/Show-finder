@@ -1,83 +1,17 @@
 import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import handler from './api/recommend.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${GEMINI_API_KEY}`;
-
-const SYSTEM_PROMPT = `You are an expert at matching people with the perfect show or film to watch.
-Given a description of someone's mood, vibe, or what kind of story they want, recommend
-4-5 TV shows or movies that fit perfectly. Be specific and thoughtful — go beyond obvious
-picks when the mood calls for it. Mix genres when it makes sense (e.g. a documentary
-alongside a drama). Keep each reason to 1-2 sentences, focused on why it matches the mood.`;
-
 app.use(express.json());
-app.use(express.static(`${__dirname}/public`));
+app.use(express.static(__dirname));
 
-app.post('/api/recommend', async (req, res) => {
-  const { mood } = req.body ?? {};
+app.post('/api/recommend', handler);
 
-  if (!mood || typeof mood !== 'string' || !mood.trim()) {
-    return res.status(400).json({ error: 'mood is required' });
-  }
-
-  try {
-    const response = await fetch(GEMINI_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents: [{ parts: [{ text: mood.trim() }] }],
-        generationConfig: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: 'object',
-            properties: {
-              recommendations: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    title:  { type: 'string' },
-                    genre:  { type: 'string' },
-                    reason: { type: 'string' },
-                  },
-                  required: ['title', 'genre', 'reason'],
-                },
-              },
-            },
-            required: ['recommendations'],
-          },
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      const err = await response.text();
-      throw new Error(`Gemini ${response.status}: ${err}`);
-    }
-
-    const geminiData = await response.json();
-    const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) throw new Error('Empty response from Gemini');
-
-    res.json(JSON.parse(text));
-  } catch (err) {
-    console.error('Recommendation error:', err?.message ?? err);
-    res.status(500).json({ error: 'Failed to get recommendations. Please try again.' });
-  }
+const PORT = process.env.PORT ?? 3000;
+app.listen(PORT, () => {
+  console.log(`Show Finder running → http://localhost:${PORT}`);
 });
-
-// Vercel imports this file as a serverless function — export the app.
-// Locally, listen on a port as usual.
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT ?? 3000;
-  app.listen(PORT, () => {
-    console.log(`Show Finder running → http://localhost:${PORT}`);
-  });
-}
-
-export default app;
