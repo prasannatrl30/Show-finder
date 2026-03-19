@@ -17,35 +17,41 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'mood is required' });
   }
 
+  const prompt = mood.trim();
+  console.log('[recommend] mood:', prompt);
+
+  const requestBody = {
+    systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: {
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: 'object',
+        properties: {
+          recommendations: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                title:  { type: 'string' },
+                genre:  { type: 'string' },
+                reason: { type: 'string' },
+              },
+              required: ['title', 'genre', 'reason'],
+            },
+          },
+        },
+        required: ['recommendations'],
+      },
+    },
+  };
+  console.log('[recommend] prompt to Gemini:', JSON.stringify(requestBody, null, 2));
+
   try {
     const response = await fetch(GEMINI_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents: [{ parts: [{ text: mood.trim() }] }],
-        generationConfig: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: 'object',
-            properties: {
-              recommendations: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    title:  { type: 'string' },
-                    genre:  { type: 'string' },
-                    reason: { type: 'string' },
-                  },
-                  required: ['title', 'genre', 'reason'],
-                },
-              },
-            },
-            required: ['recommendations'],
-          },
-        },
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
@@ -54,6 +60,7 @@ export default async function handler(req, res) {
     }
 
     const geminiData = await response.json();
+    console.log('[recommend] raw Gemini response:', JSON.stringify(geminiData, null, 2));
     const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!text) throw new Error('Empty response from Gemini');
 
