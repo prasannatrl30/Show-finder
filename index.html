@@ -3,27 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Show Finder</title>
+  <title>Watchpal — Find something worth watching</title>
+  <meta name="description" content="Describe your mood and Watchpal finds the perfect film or show for you." />
+  <meta property="og:title" content="Watchpal" />
+  <meta property="og:description" content="AI-powered film and show recommendations based on your mood." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital@1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     [hidden] { display: none !important; }
 
     :root {
-      --bg: #0e0c0a;
-      --surface: #181410;
-      --surface2: #211d18;
-      --border: #2d2620;
-      --border-light: #3d3328;
-      --accent: #d4903a;
-      --accent-dim: rgba(212, 144, 58, 0.12);
-      --accent-glow: rgba(212, 144, 58, 0.2);
-      --text: #f0ece6;
-      --text-dim: #c4b8a8;
-      --muted: #7a6e62;
-      --muted-light: #9a8e80;
+      --bg:           #F7F5F1;
+      --surface:      #EEEAE3;
+      --surface-card: #FFFFFF;
+      --border:       #E0DBD3;
+      --border-light: #D0C9BF;
+      --accent:       #C4622D;
+      --accent-dim:   rgba(196, 98, 45, 0.08);
+      --accent-hover: #A8501F;
+      --text:         #1C1C1E;
+      --text-dim:     #6B6B6B;
+      --muted:        #9B9590;
+      --star:         #D4A843;
+      --shadow-sm:    0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md:    0 4px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-lg:    0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.05);
     }
 
     body {
@@ -34,28 +40,35 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-    }
-
-    body::before {
-      content: '';
-      position: fixed;
-      top: -20vh; left: 50%;
-      transform: translateX(-50%);
-      width: 80vw; height: 60vh;
-      background: radial-gradient(ellipse, rgba(212, 144, 58, 0.06) 0%, transparent 70%);
-      pointer-events: none;
-      z-index: 0;
+      -webkit-font-smoothing: antialiased;
     }
 
     .page-inner {
-      position: relative;
-      z-index: 1;
       width: 100%;
-      max-width: 1020px;
+      max-width: 1060px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 5rem 1.5rem 6rem;
+      padding: 3rem 1.5rem 7rem;
+    }
+
+    /* ─── WORDMARK ─── */
+    .wordmark {
+      align-self: flex-start;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      margin-bottom: 4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .wordmark-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: inline-block;
     }
 
     /* ─── SEARCH FULL ─── */
@@ -75,62 +88,68 @@
     }
     #searchFull.fading-in { animation: fadeInDown 0.32s ease both; }
 
+    /* ─── HEADER ─── */
     header {
       text-align: center;
-      max-width: 580px;
-      margin-bottom: 2rem;
+      max-width: 600px;
+      margin-bottom: 2.25rem;
     }
 
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
+    .eyebrow {
       font-size: 0.72rem;
       font-weight: 600;
       letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--accent);
-      border: 1px solid rgba(212, 144, 58, 0.3);
-      background: var(--accent-dim);
-      border-radius: 100px;
-      padding: 0.3rem 0.8rem;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.25rem;
     }
-    .badge-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
 
     h1 {
-      font-family: 'DM Serif Display', Georgia, serif;
-      font-size: clamp(2.4rem, 6vw, 3.8rem);
-      font-weight: 400;
-      line-height: 1.1;
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: clamp(2.2rem, 5.5vw, 3.5rem);
+      font-weight: 600;
+      line-height: 1.12;
       color: var(--text);
-      margin-bottom: 1.1rem;
+      letter-spacing: -0.03em;
+      margin-bottom: 1rem;
     }
-    h1 em { font-style: italic; color: var(--accent); }
+    h1 .playfair {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic;
+      font-weight: 400;
+      color: var(--accent);
+      letter-spacing: -0.01em;
+    }
 
     .subtitle {
-      color: var(--muted-light);
+      color: var(--text-dim);
       font-size: 1rem;
-      line-height: 1.65;
-      max-width: 440px;
+      line-height: 1.7;
+      max-width: 400px;
       margin: 0 auto;
     }
 
-    .divider { width: 40px; height: 1px; background: var(--border-light); margin: 1.5rem auto 0; }
+    .divider {
+      width: 36px; height: 2px;
+      background: var(--accent);
+      margin: 1.5rem auto 0;
+      border-radius: 2px;
+      opacity: 0.4;
+    }
 
     /* ─── MOOD CHIPS ─── */
     .mood-chips-wrap {
       width: 100%;
       max-width: 640px;
-      margin-bottom: 0.85rem;
+      margin-bottom: 1rem;
     }
     .mood-chips-label {
       font-size: 0.7rem;
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      font-weight: 500;
-      margin-bottom: 0.55rem;
+      font-weight: 600;
+      margin-bottom: 0.6rem;
     }
     .mood-chips-row {
       display: flex;
@@ -146,61 +165,61 @@
       font-family: inherit;
       font-size: 0.8rem;
       font-weight: 500;
-      padding: 0.38rem 0.9rem;
+      padding: 0.38rem 0.95rem;
       border-radius: 100px;
-      border: 1px solid rgba(212, 144, 58, 0.22);
-      background: rgba(212, 144, 58, 0.06);
-      color: var(--text-dim);
+      border: 1px solid var(--border-light);
+      background: var(--surface);
+      color: var(--text);
       cursor: pointer;
-      transition: border-color 0.15s, color 0.15s, background 0.15s, transform 0.1s;
+      transition: border-color 0.15s, color 0.15s, background 0.15s, box-shadow 0.15s, transform 0.1s;
       white-space: nowrap;
     }
     .mood-chip:hover {
       border-color: var(--accent);
       color: var(--accent);
-      background: var(--accent-dim);
+      background: var(--surface-card);
+      box-shadow: var(--shadow-sm);
     }
-    .mood-chip:active { transform: scale(0.95); }
+    .mood-chip:active { transform: scale(0.96); }
 
     /* ─── SEARCH CARD ─── */
-    .card {
-      background: var(--surface);
+    .search-card {
+      background: var(--surface-card);
       border: 1px solid var(--border);
-      border-radius: 20px;
+      border-radius: 18px;
       width: 100%;
       max-width: 640px;
       overflow: hidden;
+      box-shadow: var(--shadow-md);
     }
-    .card-body { padding: 1.8rem 2rem 1.2rem; }
+    .card-body { padding: 1.75rem 2rem 1.25rem; }
 
     label {
       display: block;
-      font-size: 0.8rem;
-      font-weight: 500;
-      color: var(--muted-light);
-      margin-bottom: 0.75rem;
-      letter-spacing: 0.04em;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 0.65rem;
+      letter-spacing: 0.07em;
       text-transform: uppercase;
     }
 
-    /* Rotating placeholder */
-    .input-wrap { position: relative; min-height: 100px; }
+    .input-wrap { position: relative; min-height: 96px; }
 
     textarea {
       width: 100%;
-      min-height: 100px;
+      min-height: 96px;
       background: transparent;
       border: none;
       color: var(--text);
       font-family: inherit;
       font-size: 1rem;
-      line-height: 1.65;
+      line-height: 1.7;
       resize: none;
       outline: none;
       position: relative;
       z-index: 1;
     }
-    /* Hide native placeholder — we use the overlay */
     textarea::placeholder { color: transparent; }
 
     .ph-overlay {
@@ -209,7 +228,7 @@
       color: var(--muted);
       font-style: italic;
       font-size: 1rem;
-      line-height: 1.65;
+      line-height: 1.7;
       pointer-events: none;
       transition: opacity 0.45s ease;
       z-index: 0;
@@ -224,61 +243,66 @@
       justify-content: space-between;
       gap: 1rem;
     }
-    .footer-hint { font-size: 0.8rem; color: var(--muted); }
+    .footer-hint { font-size: 0.78rem; color: var(--muted); }
 
     button[type="submit"] {
       flex-shrink: 0;
-      padding: 0.65rem 1.4rem;
+      padding: 0.65rem 1.5rem;
       background: var(--accent);
-      color: #0e0c0a;
+      color: #fff;
       font-family: inherit;
       font-size: 0.88rem;
       font-weight: 600;
       border: none;
       border-radius: 10px;
       cursor: pointer;
-      transition: opacity 0.15s, transform 0.1s, box-shadow 0.15s;
-      box-shadow: 0 2px 12px var(--accent-glow);
+      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+      box-shadow: 0 2px 8px rgba(196, 98, 45, 0.3);
       display: flex;
       align-items: center;
       gap: 0.45rem;
     }
-    button[type="submit"]:hover  { opacity: 0.9; box-shadow: 0 4px 20px var(--accent-glow); }
+    button[type="submit"]:hover  { background: var(--accent-hover); box-shadow: 0 4px 16px rgba(196, 98, 45, 0.35); }
     button[type="submit"]:active { transform: scale(0.97); }
-    button[type="submit"]:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+    button[type="submit"]:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
     .btn-arrow { font-size: 1.05em; line-height: 1; }
 
     /* ─── COMPACT BAR ─── */
     .compact-bar {
       width: 100%;
-      background: var(--surface);
+      background: var(--surface-card);
       border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 0.8rem 1.2rem;
+      border-radius: 12px;
+      padding: 0.75rem 1.25rem;
       display: flex;
       align-items: center;
       gap: 0.9rem;
-      margin-bottom: 1.75rem;
-      animation: slideDown 0.32s cubic-bezier(0.4, 0, 0.2, 1) both;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow-sm);
+      animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
     }
     @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-8px); }
+      from { opacity: 0; transform: translateY(-6px); }
       to   { opacity: 1; transform: translateY(0); }
     }
     .compact-query {
       flex: 1; min-width: 0;
-      font-size: 0.9rem; color: var(--text-dim);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      font-size: 0.88rem;
+      color: var(--text-dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .compact-edit-btn {
       flex-shrink: 0;
       background: none;
       border: 1px solid var(--border-light);
-      color: var(--muted-light);
+      color: var(--text-dim);
       font-family: inherit;
-      font-size: 0.78rem;
-      padding: 0.38rem 0.8rem;
-      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 0.3rem 0.8rem;
+      border-radius: 7px;
       cursor: pointer;
       transition: border-color 0.15s, color 0.15s;
     }
@@ -288,7 +312,7 @@
     #results { width: 100%; }
 
     @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(8px); }
+      from { opacity: 0; transform: translateY(6px); }
       to   { opacity: 1; transform: translateY(0); }
     }
 
@@ -296,7 +320,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 0.9rem;
+      margin-bottom: 1rem;
       gap: 1rem;
     }
     .results-count {
@@ -306,27 +330,28 @@
     }
     .results-count strong { color: var(--accent); font-weight: 600; }
 
-    .toolbar-right { display: flex; align-items: center; gap: 0.4rem; }
+    .toolbar-right { display: flex; align-items: center; gap: 0.35rem; }
 
     .view-btn {
-      background: none;
+      background: var(--surface-card);
       border: 1px solid var(--border);
       color: var(--muted);
-      width: 34px; height: 34px;
+      width: 32px; height: 32px;
       border-radius: 8px;
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: border-color 0.15s, color 0.15s, background 0.15s;
     }
     .view-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
-    .view-btn:hover:not(.active) { border-color: var(--border-light); color: var(--text-dim); }
+    .view-btn:hover:not(.active) { border-color: var(--border-light); color: var(--text); }
 
+    /* ─── FILTER CHIPS ─── */
     .filter-row {
       display: flex;
-      gap: 0.45rem;
+      gap: 0.4rem;
       overflow-x: auto;
       padding-bottom: 0.25rem;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1.5rem;
       scrollbar-width: none;
     }
     .filter-row::-webkit-scrollbar { display: none; }
@@ -336,22 +361,26 @@
       font-family: inherit;
       font-size: 0.78rem;
       font-weight: 500;
-      padding: 0.32rem 0.8rem;
+      padding: 0.3rem 0.85rem;
       border-radius: 100px;
       border: 1px solid var(--border);
-      background: none;
-      color: var(--muted-light);
+      background: var(--surface-card);
+      color: var(--text-dim);
       cursor: pointer;
       transition: all 0.15s;
       white-space: nowrap;
     }
     .chip:hover { border-color: var(--border-light); color: var(--text); }
-    .chip.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+    .chip.active {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
 
     /* ─── CARD POSTER ─── */
     .card-poster {
       position: relative;
-      background: var(--surface2);
+      background: var(--surface);
       overflow: hidden;
       flex-shrink: 0;
     }
@@ -365,26 +394,27 @@
     .poster-placeholder {
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
-      background: linear-gradient(160deg, var(--surface2) 0%, #1a1208 100%);
+      background: linear-gradient(150deg, #EEEAE3 0%, #E4DDD3 100%);
     }
     .ph-num {
-      font-family: 'DM Serif Display', Georgia, serif;
+      font-family: 'Playfair Display', Georgia, serif;
       font-style: italic;
-      color: var(--accent);
-      opacity: 0.35;
+      color: var(--border-light);
+      font-weight: 400;
     }
 
-    .card-info { display: flex; flex-direction: column; gap: 0.28rem; flex: 1; }
+    /* Shared card info */
+    .card-info { display: flex; flex-direction: column; gap: 0.25rem; flex: 1; }
 
     .card-meta-row {
       display: flex; align-items: center; justify-content: space-between; gap: 0.4rem;
     }
 
     .show-meta {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       color: var(--accent);
-      font-weight: 500;
-      letter-spacing: 0.04em;
+      font-weight: 600;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
       white-space: nowrap;
       overflow: hidden;
@@ -395,92 +425,100 @@
       flex-shrink: 0;
       display: inline-flex;
       align-items: center;
-      gap: 0.18rem;
-      background: rgba(212, 144, 58, 0.12);
-      border: 1px solid rgba(212, 144, 58, 0.22);
-      color: var(--accent);
-      font-size: 0.7rem;
+      gap: 0.2rem;
+      background: rgba(212, 168, 67, 0.1);
+      border: 1px solid rgba(212, 168, 67, 0.25);
+      color: #A07820;
+      font-size: 0.68rem;
       font-weight: 600;
-      padding: 0.12rem 0.4rem;
+      padding: 0.1rem 0.4rem;
       border-radius: 4px;
       white-space: nowrap;
     }
 
-    .show-title { font-weight: 600; font-size: 0.92rem; color: var(--text); line-height: 1.3; }
-    .show-year  { font-size: 0.72rem; color: var(--muted); }
-    .show-reason { font-size: 0.82rem; color: var(--text-dim); line-height: 1.55; margin-top: 0.15rem; }
+    .show-title { font-weight: 600; font-size: 0.9rem; color: var(--text); line-height: 1.35; }
+    .show-year  { font-size: 0.72rem; color: var(--muted); font-weight: 400; }
+    .show-reason { font-size: 0.8rem; color: var(--text-dim); line-height: 1.6; margin-top: 0.2rem; }
 
     /* ─── GRID VIEW ─── */
     .cards-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 1.1rem;
     }
     .cards-grid .show-card {
-      background: var(--surface);
+      background: var(--surface-card);
       border: 1px solid var(--border);
       border-radius: 14px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      transition: border-color 0.15s, transform 0.18s;
+      transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
       animation: fadeUp 0.35s ease both;
+      box-shadow: var(--shadow-sm);
     }
-    .cards-grid .show-card:hover { border-color: var(--border-light); transform: translateY(-3px); }
+    .cards-grid .show-card:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-3px);
+      border-color: var(--border-light);
+    }
     .cards-grid .show-card:nth-child(2) { animation-delay: 0.04s; }
     .cards-grid .show-card:nth-child(3) { animation-delay: 0.08s; }
     .cards-grid .show-card:nth-child(4) { animation-delay: 0.12s; }
     .cards-grid .show-card:nth-child(5) { animation-delay: 0.16s; }
 
     .cards-grid .card-poster { aspect-ratio: 2 / 3; width: 100%; }
-    .cards-grid .ph-num { font-size: 2.4rem; }
-    .cards-grid .card-info { padding: 0.85rem 0.95rem; }
+    .cards-grid .ph-num { font-size: 2.2rem; }
+    .cards-grid .card-info { padding: 1rem; }
 
     /* ─── LIST VIEW ─── */
     .cards-list {
       display: flex;
       flex-direction: column;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-      max-width: 680px;
+      gap: 0.6rem;
+      max-width: 700px;
       margin: 0 auto;
+      width: 100%;
     }
     .cards-list .show-card {
-      background: var(--surface);
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
       display: flex;
       flex-direction: row;
-      border-bottom: 1px solid var(--border);
-      transition: background 0.15s;
+      overflow: hidden;
+      transition: box-shadow 0.2s, border-color 0.2s;
       animation: fadeUp 0.35s ease both;
+      box-shadow: var(--shadow-sm);
     }
-    .cards-list .show-card:last-child { border-bottom: none; }
-    .cards-list .show-card:hover { background: var(--surface2); }
+    .cards-list .show-card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--border-light);
+    }
     .cards-list .show-card:nth-child(2) { animation-delay: 0.04s; }
     .cards-list .show-card:nth-child(3) { animation-delay: 0.08s; }
     .cards-list .show-card:nth-child(4) { animation-delay: 0.12s; }
     .cards-list .show-card:nth-child(5) { animation-delay: 0.16s; }
 
-    .cards-list .card-poster { width: 88px; align-self: stretch; }
-    .cards-list .ph-num { font-size: 1.6rem; }
-    .cards-list .card-info { padding: 1rem 1.25rem; }
+    .cards-list .card-poster { width: 80px; flex-shrink: 0; align-self: stretch; }
+    .cards-list .ph-num { font-size: 1.4rem; }
+    .cards-list .card-info { padding: 1rem 1.25rem; justify-content: center; }
 
     /* ─── EMPTY STATE ─── */
     .empty-state {
       text-align: center;
-      padding: 3rem 1rem 2rem;
+      padding: 3.5rem 1rem 2rem;
       animation: fadeUp 0.4s ease both;
     }
-    .empty-icon { font-size: 2rem; margin-bottom: 0.75rem; opacity: 0.5; }
+    .empty-icon { font-size: 2.2rem; margin-bottom: 0.85rem; }
     .empty-text {
       font-size: 0.95rem;
-      color: var(--muted-light);
+      color: var(--text-dim);
       line-height: 1.65;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1.5rem;
     }
     .empty-chips {
-      display: flex;
-      gap: 0.4rem;
+      display: flex; gap: 0.4rem;
       justify-content: center;
       flex-wrap: wrap;
     }
@@ -488,36 +526,37 @@
       font-family: inherit;
       font-size: 0.8rem;
       font-weight: 500;
-      padding: 0.38rem 0.9rem;
+      padding: 0.4rem 1rem;
       border-radius: 100px;
-      border: 1px solid rgba(212, 144, 58, 0.22);
-      background: rgba(212, 144, 58, 0.06);
-      color: var(--text-dim);
+      border: 1px solid var(--border-light);
+      background: var(--surface);
+      color: var(--text);
       cursor: pointer;
-      transition: border-color 0.15s, color 0.15s, background 0.15s;
-      white-space: nowrap;
+      transition: border-color 0.15s, color 0.15s;
     }
-    .empty-chip:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+    .empty-chip:hover { border-color: var(--accent); color: var(--accent); }
 
     /* ─── SPINNER / ERROR ─── */
     .spinner {
       display: flex; align-items: center; justify-content: center;
-      gap: 0.65rem; color: var(--muted-light); font-size: 0.9rem; padding: 3rem 0;
+      gap: 0.65rem; color: var(--text-dim); font-size: 0.9rem; padding: 4rem 0;
     }
     .spinner-ring {
       width: 18px; height: 18px;
       border: 2px solid var(--border-light);
       border-top-color: var(--accent);
       border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      animation: spin 0.75s linear infinite;
       flex-shrink: 0;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     .error-msg {
-      color: #e87171; font-size: 0.88rem; padding: 1rem 1.25rem;
-      background: rgba(232, 113, 113, 0.06);
-      border: 1px solid rgba(232, 113, 113, 0.18);
+      color: #C0392B;
+      font-size: 0.88rem;
+      padding: 1rem 1.25rem;
+      background: rgba(192, 57, 43, 0.05);
+      border: 1px solid rgba(192, 57, 43, 0.15);
       border-radius: 12px;
       animation: fadeUp 0.3s ease;
     }
@@ -527,18 +566,24 @@
 
   <div class="page-inner">
 
+    <!-- Wordmark -->
+    <div class="wordmark">
+      <span class="wordmark-dot"></span>
+      Watchpal
+    </div>
+
     <!-- Full search section -->
     <div id="searchFull">
       <header>
-        <div class="badge"><span class="badge-dot"></span>AI-powered discovery</div>
-        <h1>What do you feel<br>like <em>watching?</em></h1>
-        <p class="subtitle">Describe your mood, the vibe you're after, or a story you're craving — and we'll find something perfect.</p>
+        <p class="eyebrow">AI-powered discovery</p>
+        <h1>What do you feel like<br><span class="playfair">watching?</span></h1>
+        <p class="subtitle">Describe your mood, the vibe you're after, or a story you're craving.</p>
         <div class="divider"></div>
       </header>
 
-      <!-- Mood suggestion chips -->
+      <!-- Mood chips -->
       <div class="mood-chips-wrap">
-        <div class="mood-chips-label">Try one of these</div>
+        <div class="mood-chips-label">Quick picks</div>
         <div class="mood-chips-row" id="moodChipsRow">
           <button class="mood-chip" type="button">Something to cry to</button>
           <button class="mood-chip" type="button">Friday night energy</button>
@@ -552,7 +597,7 @@
         </div>
       </div>
 
-      <div class="card">
+      <div class="search-card">
         <form id="moodForm">
           <div class="card-body">
             <label for="mood">Your mood or craving</label>
@@ -595,7 +640,7 @@
 
     let allShows    = [];
     let activeChip  = 'all';
-    let currentView = 'grid';
+    let currentView = 'list'; // default to list view
 
     // ── Rotating placeholder ──
     const PLACEHOLDERS = [
@@ -635,10 +680,9 @@
       moodInput.value ? stopPlaceholder() : startPlaceholder();
     });
 
-    // Start rotating on load
     startPlaceholder();
 
-    // ── Enter key submits; Shift+Enter inserts newline ──
+    // ── Enter submits; Shift+Enter = newline ──
     moodInput.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -648,11 +692,10 @@
       }
     });
 
-    // ── Mood chips (both suggestion row and empty-state chips) ──
+    // ── Mood chips ──
     function submitMood(text) {
       moodInput.value = text;
       stopPlaceholder();
-      // Small delay so the textarea visually updates first
       setTimeout(() => {
         form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
       }, 60);
@@ -716,9 +759,9 @@
         if (!res.ok) throw new Error(`Server error: ${res.status}`);
 
         const data = await res.json();
-        allShows    = data.recommendations ?? data.shows ?? [];
-        activeChip  = 'all';
-        currentView = 'grid';
+        allShows   = data.recommendations ?? data.shows ?? [];
+        activeChip = 'all';
+        currentView = 'list'; // always reset to list on new search
         renderResults();
       } catch (err) {
         resultsEl.innerHTML = `<div class="error-msg">Something went wrong: ${err.message}</div>`;
@@ -751,7 +794,6 @@
       return allShows.filter(s => s.genre === activeChip);
     }
 
-    // ── Conversational count ──
     function countLabel(n) {
       if (n === 1) return 'Found <strong>1</strong> pick for you';
       return `Found <strong>${n}</strong> films for you`;
@@ -828,12 +870,12 @@
           </div>
           <div class="card-info">
             <div class="card-meta-row">
-              ${s.genre   ? `<span class="show-meta">${escHtml(s.genre)}</span>` : '<span></span>'}
+              ${s.genre      ? `<span class="show-meta">${escHtml(s.genre)}</span>`          : '<span></span>'}
               ${s.imdbRating ? `<span class="imdb-badge">★ ${escHtml(s.imdbRating)}</span>` : ''}
             </div>
             <span class="show-title">${escHtml(s.title ?? s.name ?? 'Untitled')}</span>
-            ${s.year   ? `<span class="show-year">${escHtml(s.year)}</span>` : ''}
-            ${s.reason ? `<p class="show-reason">${escHtml(s.reason)}</p>` : ''}
+            ${s.year   ? `<span class="show-year">${escHtml(s.year)}</span>`   : ''}
+            ${s.reason ? `<p class="show-reason">${escHtml(s.reason)}</p>`     : ''}
           </div>
         </div>`;
     }
