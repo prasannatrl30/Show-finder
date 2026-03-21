@@ -721,6 +721,174 @@
       color: var(--text); cursor: pointer; transition: border-color 0.15s, color 0.15s;
     }
     .empty-chip:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ─── RIGHT NOW SECTION ─── */
+    .right-now-section {
+      width: 100%;
+      margin: 1rem 0 0.7rem;
+    }
+    .right-now-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      margin-bottom: 0.65rem;
+    }
+    .right-now-labels { text-align: center; }
+    .right-now-label {
+      display: block;
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+    }
+    .right-now-subtitle {
+      font-size: 0.68rem;
+      color: var(--muted);
+    }
+    .right-now-refresh {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      padding: 0.2rem;
+      line-height: 0;
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+    .right-now-refresh:hover:not(:disabled) { color: var(--accent); }
+    .right-now-refresh:disabled { opacity: 0.35; cursor: default; }
+    .right-now-refresh.spinning svg { animation: spin 0.7s linear infinite; }
+
+    /* Horizontal card row */
+    .right-now-cards {
+      display: flex;
+      gap: 0.65rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding: 0.15rem 0 0.4rem;
+      justify-content: center;
+    }
+    .right-now-cards::-webkit-scrollbar { display: none; }
+
+    /* Compact poster card */
+    .rn-card {
+      flex-shrink: 0;
+      width: 108px;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .rn-card:hover { transform: translateY(-3px); }
+    .rn-poster {
+      width: 108px;
+      height: 162px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--surface);
+      position: relative;
+      margin-bottom: 0.35rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .rn-poster img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .rn-poster.rn-no-img img { display: none; }
+    .rn-poster-ph {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(150deg, #EEEAE3 0%, #E4DDD3 100%);
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic;
+      font-size: 1.6rem;
+      color: var(--border-light);
+    }
+    .rn-title {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .rn-rating {
+      font-size: 0.65rem;
+      color: #8a6414;
+      margin-top: 0.1rem;
+    }
+
+    /* Skeleton */
+    .rn-skeleton { flex-shrink: 0; width: 108px; }
+    .rn-skeleton-poster {
+      width: 108px; height: 162px;
+      border-radius: 10px;
+      background: linear-gradient(90deg, var(--surface) 0%, var(--border) 50%, var(--surface) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s ease-in-out infinite;
+      margin-bottom: 0.35rem;
+    }
+    .rn-skeleton-line {
+      height: 9px; border-radius: 4px;
+      background: var(--surface); margin-top: 0.25rem;
+    }
+    @keyframes shimmer {
+      0%   { background-position:  200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .rn-error { font-size: 0.78rem; color: var(--muted); text-align: center; padding: 1rem 0; }
+
+    /* ─── RIGHT NOW MODAL ─── */
+    .rn-modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(28, 28, 30, 0.52);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999; padding: 1.25rem;
+      backdrop-filter: blur(3px);
+      animation: fadeIn 0.18s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .rn-modal-box {
+      background: var(--surface-card);
+      border-radius: 18px; width: 100%; max-width: 440px;
+      max-height: 85vh; overflow-y: auto;
+      box-shadow: var(--shadow-lg); position: relative;
+      animation: slideUp 0.22s ease both;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(18px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    .rn-modal-close {
+      position: absolute; top: 0.8rem; right: 1rem;
+      background: none; border: none;
+      font-size: 1.35rem; color: var(--muted);
+      cursor: pointer; line-height: 1; padding: 0.15rem 0.3rem;
+      transition: color 0.15s; z-index: 1;
+    }
+    .rn-modal-close:hover { color: var(--text); }
+    .rn-modal-content {
+      display: flex; gap: 1rem; padding: 1.35rem 1.25rem;
+      align-items: flex-start;
+    }
+    .rn-modal-poster {
+      width: 88px; height: 132px; flex-shrink: 0;
+      border-radius: 10px; overflow: hidden;
+      background: var(--surface); position: relative;
+    }
+    .rn-modal-poster img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .rn-modal-poster.rn-no-img img { display: none; }
+    .rn-modal-info { flex: 1; min-width: 0; }
+    .rn-modal-title {
+      font-size: 1rem; font-weight: 600; color: var(--text);
+      line-height: 1.3; margin-bottom: 0.2rem;
+    }
   </style>
 </head>
 <body>
@@ -770,6 +938,24 @@
             <button type="submit" id="submitBtn">Discover →</button>
           </div>
         </form>
+      </div>
+
+      <!-- Right Now section — time-aware automatic picks -->
+      <div id="rightNowSection" class="right-now-section">
+        <div class="right-now-header">
+          <div class="right-now-labels">
+            <span class="right-now-label" id="rightNowLabel">Right now</span>
+            <span class="right-now-subtitle">picked for right now</span>
+          </div>
+          <button class="right-now-refresh" id="rightNowRefresh" aria-label="Refresh picks" title="Refresh picks">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"/>
+              <polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+          </button>
+        </div>
+        <div class="right-now-cards" id="rightNowCards"></div>
       </div>
 
       <!-- Mood chips — below the input card, populated by JS -->
@@ -1285,6 +1471,205 @@
       }
     });
 
+    /* ── RIGHT NOW — time-aware automatic recommendations ── */
+
+    function getTimeSlot() {
+      const now  = new Date();
+      const day  = now.getDay();   // 0=Sun … 6=Sat
+      const hour = now.getHours();
+      const mins = now.getMinutes();
+      const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+      const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      const d = days[day];
+
+      const mood = (desc) =>
+        `It is currently ${d} at ${timeStr} local time. ${desc} ` +
+        `Return exactly 3 results. Factor in the day and time heavily — ` +
+        `these picks must feel right for THIS specific moment.`;
+
+      // Friday night
+      if (day === 5 && hour >= 17)
+        return { label: 'Friday night sorted',
+          prompt: mood('Suggest 3 films or shows for Friday night — exciting, fun, high-energy. Something people would genuinely want to watch with friends or alone winding down the week.') };
+
+      // Saturday
+      if (day === 6) {
+        if (hour < 12)
+          return { label: 'A lazy Saturday pick',
+            prompt: mood('Suggest 3 films or shows for a relaxed Saturday morning — comfortable, easy-going, not too intense. Coffee and couch energy.') };
+        if (hour < 17)
+          return { label: 'A lazy Saturday pick',
+            prompt: mood('Suggest 3 films or shows for a Saturday afternoon — enjoyable, could be anything from funny to dramatic. Weekend freedom energy.') };
+        return { label: 'Saturday night in',
+          prompt: mood('Suggest 3 films or shows for a Saturday night in — entertaining and engaging, great for social viewing or a solo treat.') };
+      }
+
+      // Sunday
+      if (day === 0) {
+        if (hour < 12)
+          return { label: 'Sunday morning slow watch',
+            prompt: mood('Suggest 3 films or shows for a slow Sunday morning — gentle, atmospheric, unhurried. Something that feels like a warm cup of tea.') };
+        if (hour < 17)
+          return { label: 'A perfect Sunday afternoon',
+            prompt: mood('Suggest 3 films or shows for a Sunday afternoon — atmospheric, emotional, slow-burn. The kind of thing you talk about for days.') };
+        if (hour < 22)
+          return { label: 'Before the week begins',
+            prompt: mood('Suggest 3 films or shows for a Sunday evening — comforting but not too heavy. Winding down before Monday, something that leaves you feeling good.') };
+        return { label: 'Before the week begins',
+          prompt: mood('Suggest 3 films or shows for a late Sunday night — something absorbing but not too long or intense before the week begins.') };
+      }
+
+      // Weekday (Mon–Thu, and Fri before 5pm)
+      if (hour >= 6 && hour < 12)
+        return { label: `A ${d} morning pick`,
+          prompt: mood(`Suggest 3 films or shows for a ${d} morning — short, energising, or uplifting. Something that fits a weekday start.`) };
+      if (hour >= 12 && hour < 18)
+        return { label: `For a ${d} afternoon`,
+          prompt: mood(`Suggest 3 films or shows for a ${d} afternoon — a mid-day escape. Varied tone, easy to get into.`) };
+      if (hour >= 18 && hour < 23)
+        return { label: `A ${d} night watch`,
+          prompt: mood(`Suggest 3 films or shows for a ${d} evening — engaging but not overwhelming given work tomorrow.`) };
+      return { label: `A ${d} night watch`,
+        prompt: mood(`Suggest 3 films or shows for a late ${d} night — compelling, ideally not too long for a weeknight.`) };
+    }
+
+    let rightNowShows = [];
+
+    function renderRightNowSkeletons() {
+      const el = document.getElementById('rightNowCards');
+      if (!el) return;
+      el.innerHTML = [1,2,3].map(() => `
+        <div class="rn-skeleton">
+          <div class="rn-skeleton-poster"></div>
+          <div class="rn-skeleton-line" style="width:78%"></div>
+          <div class="rn-skeleton-line" style="width:48%;margin-top:0.2rem"></div>
+        </div>`).join('');
+    }
+
+    function renderRightNowCards(shows) {
+      const el = document.getElementById('rightNowCards');
+      if (!el) return;
+      rightNowShows = shows;
+      el.innerHTML = shows.map((s, i) => {
+        const hp = !!s.poster;
+        return `
+          <div class="rn-card" data-rn-index="${i}" role="button" tabindex="0" aria-label="${escAttr(s.title ?? '')}">
+            <div class="rn-poster${hp ? '' : ' rn-no-img'}">
+              <div class="rn-poster-ph">${i + 1}</div>
+              ${hp ? `<img src="${escAttr(s.poster)}" alt="${escAttr(s.title ?? '')}" loading="lazy" onerror="this.closest('.rn-poster').classList.add('rn-no-img')">` : ''}
+            </div>
+            <div class="rn-title">${escHtml(s.title ?? '')}</div>
+            ${s.imdbRating ? `<div class="rn-rating">★ ${escHtml(s.imdbRating)}</div>` : ''}
+          </div>`;
+      }).join('');
+    }
+
+    async function loadRightNow() {
+      const slot       = getTimeSlot();
+      const labelEl    = document.getElementById('rightNowLabel');
+      const refreshBtn = document.getElementById('rightNowRefresh');
+
+      if (labelEl)    labelEl.textContent = slot.label;
+      if (refreshBtn) { refreshBtn.disabled = true; refreshBtn.classList.add('spinning'); }
+
+      renderRightNowSkeletons();
+
+      try {
+        const res = await fetch('/api/recommend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mood:        slot.prompt,
+            count:       3,
+            watched:     getWatched(),
+            exclude:     [],
+            refinements: {},
+            history:     [],
+            rejected:    [],
+          }),
+        });
+        if (!res.ok) throw new Error('API error');
+        const data = await res.json();
+        const shows = data.recommendations ?? [];
+        if (!shows.length) throw new Error('No results');
+        renderRightNowCards(shows);
+      } catch {
+        const el = document.getElementById('rightNowCards');
+        if (el) el.innerHTML = '<p class="rn-error">Couldn\'t load picks right now.</p>';
+      } finally {
+        if (refreshBtn) { refreshBtn.disabled = false; refreshBtn.classList.remove('spinning'); }
+      }
+    }
+
+    /* ── Right Now modal ── */
+    function openRnModal(index) {
+      const s = rightNowShows[index];
+      if (!s) return;
+      const watchUrl     = `https://www.google.com/search?q=watch+${encodeURIComponent(s.title)}+streaming`;
+      const isNonEnglish = s.language && s.language.toLowerCase() !== 'english';
+      const hp           = !!s.poster;
+      const modal        = document.getElementById('rnModal');
+
+      modal.querySelector('.rn-modal-content').innerHTML = `
+        <div class="rn-modal-poster${hp ? '' : ' rn-no-img'}">
+          <div class="rn-poster-ph">★</div>
+          ${hp ? `<img src="${escAttr(s.poster)}" alt="${escAttr(s.title ?? '')}" onerror="this.closest('.rn-modal-poster').classList.add('rn-no-img')">` : ''}
+        </div>
+        <div class="rn-modal-info">
+          <div class="card-badges" style="margin-bottom:0.4rem;flex-wrap:wrap">
+            ${s.format     ? `<span class="format-badge">${escHtml(s.format)}</span>` : ''}
+            ${isNonEnglish ? `<span class="lang-badge">${escHtml(s.language)}</span>` : ''}
+            ${s.imdbRating ? `<span class="rating-badge">★ ${escHtml(s.imdbRating)}</span>` : ''}
+          </div>
+          <div class="rn-modal-title">
+            ${escHtml(s.title ?? '')}${s.year ? ` <span class="show-year">${escHtml(s.year)}</span>` : ''}
+          </div>
+          ${s.runtime ? `<span class="show-runtime">${escHtml(s.runtime)}</span>` : ''}
+          ${s.reason  ? `<p class="show-reason" style="margin-top:0.45rem;-webkit-line-clamp:unset;overflow:visible">${escHtml(s.reason)}</p>` : ''}
+          <a class="watch-link" href="${escAttr(watchUrl)}" target="_blank" rel="noopener noreferrer" style="margin-top:0.65rem">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            Where to watch
+          </a>
+        </div>`;
+
+      modal.hidden = false;
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeRnModal() {
+      document.getElementById('rnModal').hidden = true;
+      document.body.style.overflow = '';
+    }
+
+    // Card click delegation
+    document.getElementById('rightNowCards').addEventListener('click', e => {
+      const card = e.target.closest('[data-rn-index]');
+      if (card) openRnModal(parseInt(card.dataset.rnIndex, 10));
+    });
+    document.getElementById('rightNowCards').addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        const card = e.target.closest('[data-rn-index]');
+        if (card) { e.preventDefault(); openRnModal(parseInt(card.dataset.rnIndex, 10)); }
+      }
+    });
+
+    // Modal close
+    document.getElementById('rnModalClose').addEventListener('click', closeRnModal);
+    document.getElementById('rnModal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeRnModal();
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeRnModal();
+    });
+
+    // Refresh button
+    document.getElementById('rightNowRefresh').addEventListener('click', loadRightNow);
+
+    // Fire on page load — non-blocking
+    setTimeout(loadRightNow, 0);
+
     /* ── Helpers ── */
     function escHtml(str) {
       return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1293,6 +1678,14 @@
       return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
     }
   </script>
+
+  <!-- Right Now modal — fixed overlay, outside page-inner -->
+  <div id="rnModal" class="rn-modal-overlay" hidden>
+    <div class="rn-modal-box">
+      <button class="rn-modal-close" id="rnModalClose" aria-label="Close">×</button>
+      <div class="rn-modal-content"></div>
+    </div>
+  </div>
 
   <script defer src="/_vercel/insights/script.js"></script>
 </body>
