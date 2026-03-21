@@ -54,6 +54,8 @@
 
     /* ─── WORDMARK ─── */
     .wordmark {
+      width: 100%;
+      text-align: center;
       font-size: 1rem;
       font-weight: 700;
       color: var(--text);
@@ -68,6 +70,7 @@
 
     /* ─── WELCOME BACK ─── */
     .welcome-back {
+      width: 100%;
       font-size: 0.72rem;
       font-weight: 500;
       color: var(--muted);
@@ -257,12 +260,9 @@
     .mood-chips-wrap {
       width: 100%;
       margin-top: 0.55rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      text-align: center;       /* reliably centres all inline/block children */
     }
     .chips-header {
-      text-align: center;
       margin-bottom: 0.35rem;
     }
     .mood-chips-label {
@@ -283,12 +283,18 @@
       text-decoration: underline;
       text-underline-offset: 2px;
       transition: color 0.15s;
-      margin-top: 0.4rem;
+      display: block;
+      margin: 0.45rem auto 0;
     }
     .clear-history-btn:hover { color: var(--accent); }
 
-    .mood-chips-row { display: flex; gap: 0.35rem; overflow-x: auto; scrollbar-width: none; justify-content: center; flex-wrap: wrap; }
-    .mood-chips-row::-webkit-scrollbar { display: none; }
+    .mood-chips-row {
+      display: flex;
+      width: 100%;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
     .mood-chip {
       flex-shrink: 0;
       font-family: inherit;
