@@ -68,12 +68,10 @@
 
     /* ─── WELCOME BACK ─── */
     .welcome-back {
-      align-self: flex-start;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 500;
       color: var(--muted);
-      margin-bottom: 3rem;
-      margin-top: -3rem;
+      margin-bottom: 0.45rem;
     }
     .welcome-back span { color: var(--accent); font-weight: 600; }
 
@@ -263,7 +261,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.35rem;
     }
     .mood-chips-label {
       font-size: 0.65rem;
@@ -587,11 +585,6 @@
       Watchpal
     </div>
 
-    <!-- Return user greeting -->
-    <div id="welcomeBack" class="welcome-back" hidden>
-      Welcome back — <span>picks based on your history</span>
-    </div>
-
     <!-- Full search section -->
     <div id="searchFull">
       <header>
@@ -637,6 +630,9 @@
           <div class="mood-chips-label" id="chipsLabel">Quick picks</div>
           <button class="clear-history-btn" id="clearHistoryBtn" hidden>Clear history</button>
         </div>
+        <div id="welcomeBack" class="welcome-back" hidden>
+          Welcome back — <span>picks based on your history</span>
+        </div>
         <div class="mood-chips-row" id="moodChipsRow"></div>
       </div>
     </div>
@@ -679,7 +675,22 @@
       try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
       catch { return []; }
     }
+    const GENERIC_BLOCKLIST = new Set([
+      'anything','something','movies','movie','shows','show','series',
+      'films','film','documentary','documentaries','recommend','suggestions',
+      'good','great','best','watch','watching','help','please','yes','no',
+    ]);
+
+    function isMeaningfulQuery(query) {
+      const words = query.trim().split(/\s+/);
+      if (words.length < 3) return false;
+      // Also reject if it's a single word (shouldn't reach here after length check, but defensive)
+      if (words.length === 1 && GENERIC_BLOCKLIST.has(words[0].toLowerCase())) return false;
+      return true;
+    }
+
     function saveToHistory(query) {
+      if (!isMeaningfulQuery(query)) return;
       const h = getHistory().filter(e => e.query.toLowerCase() !== query.toLowerCase());
       h.unshift({ query, timestamp: Date.now() });
       localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(0, MAX_HISTORY)));
