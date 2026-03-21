@@ -182,11 +182,11 @@
     /* ─── REFINEMENT ROW ─── */
     .refinement-row {
       border-top: 1px solid var(--border);
-      padding: 0.9rem 1.75rem;
+      padding: 0.75rem 1.75rem;
       background: var(--bg);
       display: flex;
       flex-direction: column;
-      gap: 0.65rem;
+      gap: 0.5rem;
       animation: refineIn 0.2s ease both;
     }
     @keyframes refineIn {
@@ -622,26 +622,6 @@
                 <button class="r-pill"        type="button" data-group="format" data-value="documentary">Documentary</button>
               </div>
             </div>
-            <div class="refinement-group">
-              <span class="refinement-label">Language</span>
-              <div class="refinement-pills">
-                <button class="r-pill active" type="button" data-group="language" data-value="any">Any</button>
-                <button class="r-pill"        type="button" data-group="language" data-value="english">English</button>
-                <button class="r-pill"        type="button" data-group="language" data-value="tamil">Tamil</button>
-                <button class="r-pill"        type="button" data-group="language" data-value="korean">Korean</button>
-                <button class="r-pill"        type="button" data-group="language" data-value="hindi">Hindi</button>
-                <button class="r-pill"        type="button" data-group="language" data-value="other">Other</button>
-              </div>
-            </div>
-            <div class="refinement-group">
-              <span class="refinement-label">Length</span>
-              <div class="refinement-pills">
-                <button class="r-pill active" type="button" data-group="length" data-value="any">Any</button>
-                <button class="r-pill"        type="button" data-group="length" data-value="short">Under 2hrs</button>
-                <button class="r-pill"        type="button" data-group="length" data-value="long">2hrs+</button>
-                <button class="r-pill"        type="button" data-group="length" data-value="mini">Mini-series</button>
-              </div>
-            </div>
           </div>
 
           <div class="card-footer">
@@ -689,7 +669,7 @@
     let allShows      = [];
     let currentMood   = '';
     let shownTitles   = [];
-    let refinements   = { format: 'all', language: 'any', length: 'any' };
+    let refinements   = { format: 'all' };
 
     /* ── localStorage history ── */
     const HISTORY_KEY = 'watchpal_history';
