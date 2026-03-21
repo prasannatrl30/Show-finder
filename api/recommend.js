@@ -1,7 +1,7 @@
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
-const SYSTEM_PROMPT = `You are an expert at matching people with the perfect show or film to watch. You have deep knowledge of global cinema — Hollywood, Bollywood, Korean, Tamil, Japanese, French, and beyond. If the user does not specify a language or region, recommend the best match from anywhere in the world. If they do specify one, stay within it.
-Given a description of someone's mood, vibe, or what kind of story they want, recommend 15-20 TV shows or movies that fit perfectly. Be specific and thoughtful — go beyond obvious picks when the mood calls for it. Mix genres when it makes sense (e.g. a documentary alongside a drama). Keep each reason to 1-2 sentences, focused on why it matches the mood. Return only the plain title with no year, no parentheses, and no extra punctuation.`;
+const SYSTEM_PROMPT = `You are an expert at matching people with the perfect thing to watch. You have deep knowledge of global cinema and television — Hollywood, Bollywood, Korean, Tamil, Japanese, French, and beyond. If the user does not specify a language or region, recommend the best match from anywhere in the world. If they do specify one, stay within it.
+Given a description of someone's mood, vibe, or what kind of story they want, recommend 15-20 titles that fit perfectly. Always vary the format: include a mix of movies, TV series, limited series, and documentaries where they fit the mood — do not recommend only films. Be specific and thoughtful — go beyond obvious picks. Keep each reason to 1-2 sentences focused on why it matches the mood. Return only the plain title with no year, no parentheses, and no extra punctuation.`;
 
 async function enrichWithTMDB(show) {
   // Read inside function — avoids stale undefined if env var was added after a cold start

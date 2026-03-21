@@ -745,7 +745,7 @@
       resultsEl.innerHTML = `
         <div class="spinner">
           <div class="spinner-ring"></div>
-          Finding the right shows for your mood…
+          Finding films &amp; shows for your mood…
         </div>`;
 
       collapseSearch(mood);
@@ -795,8 +795,8 @@
     }
 
     function countLabel(n) {
-      if (n === 1) return 'Found <strong>1</strong> pick for you';
-      return `Found <strong>${n}</strong> films for you`;
+      if (n === 1) return 'Found <strong>1</strong> title for you';
+      return `Found <strong>${n}</strong> films &amp; shows for you`;
     }
 
     // ── Render ──
