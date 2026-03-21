@@ -315,36 +315,57 @@
     /* ─── COMPACT BAR ─── */
     .compact-bar {
       width: 100%;
-      background: var(--surface-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 0.7rem 1.1rem;
       display: flex;
       align-items: center;
-      gap: 0.8rem;
-      margin-bottom: 1.75rem;
-      box-shadow: var(--shadow-sm);
-      animation: slideDown 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
+      gap: 0.85rem;
+      padding-bottom: 0.9rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1.5px solid rgba(196, 98, 45, 0.22);
+      animation: slideDown 0.32s cubic-bezier(0.4, 0, 0.2, 1) both;
     }
     @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-5px); }
+      from { opacity: 0; transform: translateY(-4px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    .compact-query { flex: 1; min-width: 0; font-size: 0.85rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .compact-wordmark {
+      display: flex;
+      align-items: center;
+      gap: 0.28rem;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .compact-query-pill {
+      flex: 1;
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 0.22rem 0.7rem;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: center;
+    }
     .compact-edit-btn {
       flex-shrink: 0;
       background: none;
-      border: 1px solid var(--border-light);
-      color: var(--text-dim);
+      border: none;
+      color: var(--accent);
       font-family: inherit;
-      font-size: 0.72rem;
-      font-weight: 500;
-      padding: 0.28rem 0.7rem;
-      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
       cursor: pointer;
-      transition: border-color 0.15s, color 0.15s;
+      padding: 0;
+      transition: opacity 0.15s;
+      white-space: nowrap;
     }
-    .compact-edit-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .compact-edit-btn:hover { opacity: 0.65; }
 
     /* ─── RESULTS ─── */
     #results { width: 100%; }
@@ -355,13 +376,24 @@
     }
 
     .results-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1rem;
+      width: 100%;
+      text-align: center;
+      margin-bottom: 1.25rem;
     }
-    .results-count { font-size: 0.85rem; color: var(--text-dim); }
-    .results-count strong { color: var(--accent); font-weight: 600; }
+    .results-prelude {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      margin-bottom: 0.2rem;
+      letter-spacing: 0.01em;
+    }
+    .results-mood {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic;
+      font-weight: 400;
+      font-size: 1.45rem;
+      color: var(--accent);
+      line-height: 1.2;
+    }
 
     /* ─── RESULT CARDS (list only) ─── */
     .cards-list {
@@ -696,7 +728,7 @@
   <div class="page-inner">
 
     <!-- Wordmark -->
-    <div class="wordmark">
+    <div class="wordmark" id="wordmarkEl">
       <span class="wordmark-dot"></span>
       Watchpal
     </div>
@@ -755,7 +787,11 @@
 
     <!-- Compact bar shown after search -->
     <div id="compactBar" class="compact-bar" hidden>
-      <div id="compactQueryText" class="compact-query"></div>
+      <div class="compact-wordmark">
+        <span class="wordmark-dot"></span>
+        Watchpal
+      </div>
+      <div id="compactQueryText" class="compact-query-pill"></div>
       <button id="newSearchBtn" class="compact-edit-btn">Edit</button>
     </div>
 
@@ -776,6 +812,7 @@
     const moodInput        = document.getElementById('mood');
     const phOverlay        = document.getElementById('phOverlay');
     const refinementRow    = document.getElementById('refinementRow');
+    const wordmarkEl       = document.getElementById('wordmarkEl');
 
     /* ── State ── */
     let allShows             = [];
@@ -946,15 +983,17 @@
       compactQueryText.textContent = moodText;
       searchFull.classList.add('fading-out');
       setTimeout(() => {
-        searchFull.hidden = true;
+        searchFull.hidden  = true;
+        wordmarkEl.hidden  = true;
         searchFull.classList.remove('fading-out');
-        compactBar.hidden = false;
+        compactBar.hidden  = false;
       }, 280);
     }
 
     function expandSearch(openRefinements = false) {
-      compactBar.hidden = true;
-      resultsEl.hidden  = true;
+      compactBar.hidden  = true;
+      wordmarkEl.hidden  = false;
+      resultsEl.hidden   = true;
       resultsEl.innerHTML = '';
       allShows             = [];
       shownTitles          = [];
@@ -1159,7 +1198,8 @@
 
       resultsEl.innerHTML = `
         <div class="results-header">
-          <span class="results-count">Found <strong>${allShows.length}</strong> films &amp; shows for your mood</span>
+          <p class="results-prelude">Here's what we found for</p>
+          <p class="results-mood">${escHtml(currentMood)}</p>
         </div>
         <div id="conversationThread">
           <div class="cards-list">
