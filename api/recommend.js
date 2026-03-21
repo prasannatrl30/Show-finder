@@ -82,13 +82,28 @@ export default async function handler(req, res) {
       },
     },
   };
-  try {
-    const response = await fetch(GEMINI_URL, {
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY_MS = 2000;
+
+  let response;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    response = await fetch(GEMINI_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody),
     });
 
+    if (response.status === 503) {
+      console.warn(`[recommend] Gemini 503 on attempt ${attempt}/${MAX_RETRIES} — retrying in ${RETRY_DELAY_MS}ms`);
+      if (attempt < MAX_RETRIES) {
+        await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
+        continue;
+      }
+    }
+    break;
+  }
+
+  try {
     if (!response.ok) {
       const err = await response.text();
       throw new Error(`Gemini ${response.status}: ${err}`);
