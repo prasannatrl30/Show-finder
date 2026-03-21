@@ -46,7 +46,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { mood } = req.body ?? {};
+  const { mood, history } = req.body ?? {};
 
   if (!mood || typeof mood !== 'string' || !mood.trim()) {
     return res.status(400).json({ error: 'mood is required' });
@@ -55,9 +55,17 @@ export default async function handler(req, res) {
   const prompt = mood.trim();
   console.log('[recommend] mood:', prompt);
 
+  // Build personalised context from search history
+  const pastSearches = Array.isArray(history)
+    ? history.filter(h => typeof h === 'string' && h.trim()).slice(0, 3)
+    : [];
+  const historyContext = pastSearches.length
+    ? `\n\nThe user has previously searched for: ${pastSearches.map(h => `"${h}"`).join(', ')}. Factor this into your recommendations but do not repeat titles they have likely already seen.`
+    : '';
+
   const requestBody = {
     systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-    contents: [{ parts: [{ text: prompt }] }],
+    contents: [{ parts: [{ text: prompt + historyContext }] }],
     generationConfig: {
       responseMimeType: 'application/json',
       responseSchema: {

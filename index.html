@@ -560,6 +560,42 @@
       border-radius: 12px;
       animation: fadeUp 0.3s ease;
     }
+
+    /* ─── WELCOME BACK ─── */
+    .welcome-back {
+      align-self: flex-start;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 3.25rem;
+      margin-top: -2.75rem;
+      letter-spacing: 0.01em;
+    }
+    .welcome-back span {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* ─── CHIPS HEADER ─── */
+    .chips-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.55rem;
+    }
+    .clear-history-btn {
+      font-family: inherit;
+      font-size: 0.7rem;
+      color: var(--muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      transition: color 0.15s;
+    }
+    .clear-history-btn:hover { color: var(--accent); }
   </style>
 </head>
 <body>
@@ -570,6 +606,11 @@
     <div class="wordmark">
       <span class="wordmark-dot"></span>
       Watchpal
+    </div>
+
+    <!-- Return user greeting -->
+    <div id="welcomeBack" class="welcome-back" hidden>
+      Welcome back — <span>picks based on your history</span>
     </div>
 
     <!-- Full search section -->
@@ -599,20 +640,13 @@
         </form>
       </div>
 
-      <!-- Mood chips — below the input card -->
+      <!-- Mood chips — below the input card (populated by JS) -->
       <div class="mood-chips-wrap" style="margin-top: 0.85rem; margin-bottom: 0;">
-        <div class="mood-chips-label">Quick picks</div>
-        <div class="mood-chips-row" id="moodChipsRow">
-          <button class="mood-chip" type="button">Something to cry to</button>
-          <button class="mood-chip" type="button">Friday night energy</button>
-          <button class="mood-chip" type="button">Impress a date</button>
-          <button class="mood-chip" type="button">Tamil classics</button>
-          <button class="mood-chip" type="button">Mind-bending sci-fi</button>
-          <button class="mood-chip" type="button">Cozy Sunday</button>
-          <button class="mood-chip" type="button">Late night alone</button>
-          <button class="mood-chip" type="button">Feel good</button>
-          <button class="mood-chip" type="button">Edge of your seat</button>
+        <div class="chips-header">
+          <div class="mood-chips-label" id="chipsLabel">Quick picks</div>
+          <button class="clear-history-btn" id="clearHistoryBtn" hidden>Clear history</button>
         </div>
+        <div class="mood-chips-row" id="moodChipsRow"></div>
       </div>
     </div>
 
@@ -640,7 +674,71 @@
 
     let allShows    = [];
     let activeChip  = 'all';
-    let currentView = 'list'; // default to list view
+    let currentView = 'list';
+
+    // ── localStorage history ──
+    const HISTORY_KEY  = 'watchpal_history';
+    const MAX_HISTORY  = 10;
+
+    function getHistory() {
+      try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
+      catch { return []; }
+    }
+
+    function saveToHistory(query) {
+      const history = getHistory().filter(h => h.query.toLowerCase() !== query.toLowerCase());
+      history.unshift({ query, timestamp: Date.now() });
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, MAX_HISTORY)));
+    }
+
+    function clearHistory() {
+      localStorage.removeItem(HISTORY_KEY);
+    }
+
+    // ── Personalised chips ──
+    const DEFAULT_CHIPS = [
+      'Something to cry to', 'Friday night energy', 'Impress a date',
+      'Tamil classics', 'Mind-bending sci-fi', 'Cozy Sunday',
+      'Late night alone', 'Feel good', 'Edge of your seat',
+    ];
+
+    function renderChips() {
+      const history    = getHistory();
+      const chipsLabel = document.getElementById('chipsLabel');
+      const chipsRow   = document.getElementById('moodChipsRow');
+      const clearBtn   = document.getElementById('clearHistoryBtn');
+      const welcomeEl  = document.getElementById('welcomeBack');
+
+      if (history.length > 0) {
+        chipsLabel.textContent = 'YOUR PICKS';
+        clearBtn.hidden  = false;
+        welcomeEl.hidden = false;
+        const recent = history.slice(0, 5).map(h => h.query);
+        chipsRow.innerHTML = recent
+          .map(q => `<button class="mood-chip" type="button">${escHtml(q)}</button>`)
+          .join('');
+      } else {
+        chipsLabel.textContent = 'QUICK PICKS';
+        clearBtn.hidden  = true;
+        welcomeEl.hidden = true;
+        chipsRow.innerHTML = DEFAULT_CHIPS
+          .map(c => `<button class="mood-chip" type="button">${c}</button>`)
+          .join('');
+      }
+
+      chipsRow.onclick = e => {
+        const chip = e.target.closest('.mood-chip');
+        if (chip) submitMood(chip.textContent.trim());
+      };
+    }
+
+    document.getElementById('clearHistoryBtn').addEventListener('click', () => {
+      clearHistory();
+      renderChips();
+    });
+
+    // Render chips on load
+    renderChips();
 
     // ── Rotating placeholder ──
     const PLACEHOLDERS = [
@@ -701,11 +799,6 @@
       }, 60);
     }
 
-    document.getElementById('moodChipsRow').addEventListener('click', e => {
-      const chip = e.target.closest('.mood-chip');
-      if (chip) submitMood(chip.textContent.trim());
-    });
-
     // ── Collapse / expand ──
     function collapseSearch(moodText) {
       compactQueryText.textContent = moodText;
@@ -724,6 +817,7 @@
       allShows = [];
       searchFull.hidden = false;
       searchFull.classList.add('fading-in');
+      renderChips(); // refresh chips with latest history
       setTimeout(() => {
         searchFull.classList.remove('fading-in');
         moodInput.focus();
@@ -748,13 +842,18 @@
           Finding films &amp; shows for your mood…
         </div>`;
 
+      saveToHistory(mood);
       collapseSearch(mood);
 
       try {
+        const recentHistory = getHistory()
+          .slice(1, 4)           // skip the one we just saved; take next 3
+          .map(h => h.query);
+
         const res = await fetch('/api/recommend', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mood }),
+          body: JSON.stringify({ mood, history: recentHistory }),
         });
         if (!res.ok) throw new Error(`Server error: ${res.status}`);
 
