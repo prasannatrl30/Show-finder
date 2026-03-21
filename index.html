@@ -581,22 +581,6 @@
         <div class="divider"></div>
       </header>
 
-      <!-- Mood chips -->
-      <div class="mood-chips-wrap">
-        <div class="mood-chips-label">Quick picks</div>
-        <div class="mood-chips-row" id="moodChipsRow">
-          <button class="mood-chip" type="button">Something to cry to</button>
-          <button class="mood-chip" type="button">Friday night energy</button>
-          <button class="mood-chip" type="button">Impress a date</button>
-          <button class="mood-chip" type="button">Tamil classics</button>
-          <button class="mood-chip" type="button">Mind-bending sci-fi</button>
-          <button class="mood-chip" type="button">Cozy Sunday</button>
-          <button class="mood-chip" type="button">Late night alone</button>
-          <button class="mood-chip" type="button">Feel good</button>
-          <button class="mood-chip" type="button">Edge of your seat</button>
-        </div>
-      </div>
-
       <div class="search-card">
         <form id="moodForm">
           <div class="card-body">
@@ -609,10 +593,26 @@
           <div class="card-footer">
             <span class="footer-hint">Enter to search &nbsp;·&nbsp; Shift+Enter for new line</span>
             <button type="submit" id="submitBtn">
-              Find Shows <span class="btn-arrow">→</span>
+              Discover →
             </button>
           </div>
         </form>
+      </div>
+
+      <!-- Mood chips — below the input card -->
+      <div class="mood-chips-wrap" style="margin-top: 0.85rem; margin-bottom: 0;">
+        <div class="mood-chips-label">Quick picks</div>
+        <div class="mood-chips-row" id="moodChipsRow">
+          <button class="mood-chip" type="button">Something to cry to</button>
+          <button class="mood-chip" type="button">Friday night energy</button>
+          <button class="mood-chip" type="button">Impress a date</button>
+          <button class="mood-chip" type="button">Tamil classics</button>
+          <button class="mood-chip" type="button">Mind-bending sci-fi</button>
+          <button class="mood-chip" type="button">Cozy Sunday</button>
+          <button class="mood-chip" type="button">Late night alone</button>
+          <button class="mood-chip" type="button">Feel good</button>
+          <button class="mood-chip" type="button">Edge of your seat</button>
+        </div>
       </div>
     </div>
 
@@ -767,7 +767,7 @@
         resultsEl.innerHTML = `<div class="error-msg">Something went wrong: ${err.message}</div>`;
       } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = 'Find Shows <span class="btn-arrow">→</span>';
+        submitBtn.innerHTML = 'Discover →';
       }
     });
 
