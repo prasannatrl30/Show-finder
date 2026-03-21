@@ -497,6 +497,113 @@
     .watch-link:hover { opacity: 0.75; }
     .watch-link svg { flex-shrink: 0; }
 
+    /* ─── CARD ACTIONS ─── */
+    .card-bottom-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-top: 0.2rem;
+      flex-wrap: wrap;
+    }
+    .card-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      flex-shrink: 0;
+    }
+    .action-btn {
+      font-family: inherit;
+      font-size: 0.67rem;
+      font-weight: 500;
+      color: var(--muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.15rem 0.25rem;
+      transition: color 0.15s;
+      white-space: nowrap;
+      line-height: 1;
+    }
+    .action-btn:hover        { color: var(--text-dim); }
+    .action-nope:hover       { color: #b94040; }
+    .action-sep              { color: var(--border-light); font-size: 0.67rem; line-height: 1; user-select: none; }
+
+    /* Reason picker — replaces card-actions on "Not this" tap */
+    .reason-picker {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      flex-wrap: wrap;
+      animation: refineIn 0.15s ease both;
+    }
+    .reason-label {
+      font-size: 0.63rem;
+      color: var(--muted);
+      font-weight: 500;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .reason-btn {
+      font-family: inherit;
+      font-size: 0.63rem;
+      font-weight: 500;
+      padding: 0.13rem 0.4rem;
+      border-radius: 100px;
+      border: 1px solid var(--border-light);
+      background: var(--surface);
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all 0.12s;
+      white-space: nowrap;
+    }
+    .reason-btn:hover { border-color: #b94040; color: #b94040; }
+
+    /* Dismiss animation */
+    .show-card.card-dismissing {
+      opacity: 0;
+      transform: translateX(14px);
+      transition: opacity 0.28s ease, transform 0.28s ease;
+      pointer-events: none;
+    }
+
+    /* ─── CONVERSATION THREAD ─── */
+    .convo-message {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-style: italic;
+      text-align: center;
+      padding: 1rem 0 0.5rem;
+      animation: fadeUp 0.3s ease both;
+    }
+    .convo-batch {
+      margin-top: 0.65rem;
+    }
+    .all-dismissed-msg {
+      text-align: center;
+      padding: 1.5rem 1rem 0.5rem;
+      animation: fadeUp 0.4s ease both;
+    }
+    .all-dismissed-msg p {
+      font-size: 0.88rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+      margin-bottom: 0.9rem;
+    }
+    .restart-btn {
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 0.48rem 1.1rem;
+      border-radius: 10px;
+      border: 1.5px solid var(--border-light);
+      background: var(--surface-card);
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .restart-btn:hover { border-color: var(--accent); color: var(--accent); }
+
     /* ─── RESULTS FOOTER ─── */
     .results-footer {
       display: flex;
@@ -507,7 +614,7 @@
       border-top: 1px solid var(--border);
       gap: 1rem;
     }
-    .show-more-btn {
+    .find-more-btn {
       font-family: inherit;
       font-size: 0.84rem;
       font-weight: 600;
@@ -519,8 +626,8 @@
       cursor: pointer;
       transition: background 0.15s, color 0.15s;
     }
-    .show-more-btn:hover { background: var(--accent); color: #fff; }
-    .show-more-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .find-more-btn:hover    { background: var(--accent); color: #fff; }
+    .find-more-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
     .refine-btn {
       font-family: inherit;
@@ -662,10 +769,27 @@
     const refinementRow    = document.getElementById('refinementRow');
 
     /* ── State ── */
-    let allShows      = [];
-    let currentMood   = '';
-    let shownTitles   = [];
-    let refinements   = { format: 'all' };
+    let allShows             = [];
+    let currentMood          = '';
+    let shownTitles          = [];
+    let refinements          = { format: 'all' };
+    let dismissedThisSession = new Set();   // all dismissed titles (seen + rejected)
+    let rejectedThisSession  = [];          // [{ title, reason }]
+    let activeCardCount      = 0;
+
+    /* ── Watched localStorage ── */
+    const WATCHED_KEY = 'watchpal_watched';
+    function getWatched() {
+      try { return JSON.parse(localStorage.getItem(WATCHED_KEY) || '[]'); }
+      catch { return []; }
+    }
+    function addToWatched(title) {
+      const w = getWatched();
+      if (!w.includes(title)) {
+        w.push(title);
+        localStorage.setItem(WATCHED_KEY, JSON.stringify(w));
+      }
+    }
 
     /* ── localStorage history ── */
     const HISTORY_KEY = 'watchpal_history';
@@ -823,8 +947,11 @@
       compactBar.hidden = true;
       resultsEl.hidden  = true;
       resultsEl.innerHTML = '';
-      allShows     = [];
-      shownTitles  = [];
+      allShows             = [];
+      shownTitles          = [];
+      dismissedThisSession = new Set();
+      rejectedThisSession  = [];
+      activeCardCount      = 0;
       searchFull.hidden = false;
       searchFull.classList.add('fading-in');
       renderChips();
@@ -839,12 +966,17 @@
     newSearchBtn.addEventListener('click', () => expandSearch());
 
     /* ── Fetch helper ── */
-    async function fetchRecommendations(mood, exclude = []) {
+    async function fetchRecommendations(mood, exclude = [], count = 5) {
       const recentHistory = getHistory().slice(1, 4).map(h => h.query);
       const res = await fetch('/api/recommend', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ mood, refinements, exclude, history: recentHistory }),
+        body:    JSON.stringify({
+          mood, refinements, exclude, history: recentHistory,
+          watched:  getWatched(),
+          rejected: rejectedThisSession,
+          count,
+        }),
       });
       if (!res.ok) throw new Error(`Server error: ${res.status}`);
       const data = await res.json();
@@ -857,9 +989,12 @@
       const mood = moodInput.value.trim();
       if (!mood) return;
 
-      currentMood = mood;
-      allShows    = [];
-      shownTitles = [];
+      currentMood          = mood;
+      allShows             = [];
+      shownTitles          = [];
+      dismissedThisSession = new Set();
+      rejectedThisSession  = [];
+      activeCardCount      = 0;
 
       submitBtn.disabled   = true;
       submitBtn.textContent = 'Thinking…';
@@ -886,30 +1021,112 @@
       }
     });
 
-    /* ── Show more ── */
-    async function loadMore() {
-      const btn = document.getElementById('showMoreBtn');
+    /* ── Card dismissal ── */
+    function dismissCard(cardEl, title, type, reason) {
+      dismissedThisSession.add(title);
+      activeCardCount = Math.max(0, activeCardCount - 1);
+
+      if (type === 'seen') {
+        addToWatched(title);
+      } else {
+        rejectedThisSession.push({ title, reason });
+      }
+
+      cardEl.classList.add('card-dismissing');
+      setTimeout(() => {
+        cardEl.hidden = true;
+        updateFindMoreBtn();
+        if (activeCardCount <= 0) showAllDismissed();
+      }, 300);
+    }
+
+    function showReasonPicker(cardEl) {
+      const actionsEl = cardEl.querySelector('.card-actions');
+      actionsEl.innerHTML = `
+        <span class="reason-label">Why not?</span>
+        <button class="reason-btn" data-reason="Too dark">Too dark</button>
+        <button class="reason-btn" data-reason="Too long">Too long</button>
+        <button class="reason-btn" data-reason="Not in the mood">Not in the mood</button>
+        <button class="reason-btn" data-reason="Just not feeling it">Just not feeling it</button>`;
+    }
+
+    function updateFindMoreBtn() {
+      const btn = document.getElementById('findMoreBtn');
       if (!btn) return;
-      btn.disabled    = true;
-      btn.textContent = 'Loading…';
+      // Show the button as soon as something has been dismissed and cards remain
+      btn.hidden = !(dismissedThisSession.size > 0 && activeCardCount > 0);
+    }
+
+    function showAllDismissed() {
+      const thread = document.getElementById('conversationThread');
+      if (!thread) return;
+      const el = document.createElement('div');
+      el.className = 'all-dismissed-msg';
+      el.innerHTML = `
+        <p>You've dismissed everything — let's start fresh.</p>
+        <button class="restart-btn">Try a different mood →</button>`;
+      el.querySelector('.restart-btn').addEventListener('click', () => expandSearch());
+      thread.appendChild(el);
+      const footer = document.getElementById('resultsFooter');
+      if (footer) footer.hidden = true;
+    }
+
+    /* ── Find something else (conversational refine) ── */
+    async function findSomethingElse() {
+      const btn = document.getElementById('findMoreBtn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Finding…'; }
+
+      const thread = document.getElementById('conversationThread');
+
+      // Contextual loading message
+      const msgEl = document.createElement('div');
+      msgEl.className = 'convo-message';
+      msgEl.textContent = 'Got it — finding something better…';
+      thread.appendChild(msgEl);
+      msgEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      const allExclude = [...shownTitles, ...dismissedThisSession];
 
       try {
-        const more = await fetchRecommendations(currentMood, shownTitles);
-        allShows    = [...allShows, ...more];
-        shownTitles = allShows.map(s => s.title);
-        renderResults();
+        const results = await fetchRecommendations(currentMood, allExclude, 3);
+        msgEl.remove();
+
+        if (!results.length) {
+          const emptyEl = document.createElement('div');
+          emptyEl.className = 'convo-message';
+          emptyEl.textContent = 'Nothing new to suggest — try refining your search.';
+          thread.appendChild(emptyEl);
+          if (btn) { btn.disabled = false; btn.textContent = 'Find me something else →'; }
+          return;
+        }
+
+        // Append new batch
+        const startIndex = allShows.length;
+        allShows    = [...allShows, ...results];
+        shownTitles = [...shownTitles, ...results.map(s => s.title)];
+        activeCardCount += results.length;
+
+        const batchEl = document.createElement('div');
+        batchEl.className = 'cards-list convo-batch';
+        batchEl.innerHTML = results.map((s, i) => renderCard(s, startIndex + i)).join('');
+        thread.appendChild(batchEl);
+        batchEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        if (btn) { btn.disabled = false; btn.textContent = 'Find me something else →'; }
+        updateFindMoreBtn();
+
       } catch (err) {
-        btn.disabled    = false;
-        btn.textContent = 'Show more like this →';
+        msgEl.remove();
+        const errEl = document.createElement('div');
+        errEl.className = 'error-msg';
+        errEl.style.marginTop = '0.75rem';
+        errEl.textContent = 'Something went wrong — try again.';
+        thread.appendChild(errEl);
+        if (btn) { btn.disabled = false; btn.textContent = 'Find me something else →'; }
       }
     }
 
     /* ── Render results ── */
-    function countLabel(n) {
-      if (n === 1) return 'Found <strong>1</strong> title for you';
-      return `Found <strong>${n}</strong> films &amp; shows for you`;
-    }
-
     function renderResults() {
       if (!allShows.length) {
         resultsEl.innerHTML = `
@@ -929,33 +1146,38 @@
         return;
       }
 
+      activeCardCount = allShows.length;
+
       resultsEl.innerHTML = `
         <div class="results-header">
-          <span class="results-count">${countLabel(allShows.length)}</span>
+          <span class="results-count">Found <strong>${allShows.length}</strong> films &amp; shows for your mood</span>
         </div>
-        <div class="cards-list">
-          ${allShows.map((s, i) => renderCard(s, i)).join('')}
+        <div id="conversationThread">
+          <div class="cards-list">
+            ${allShows.map((s, i) => renderCard(s, i)).join('')}
+          </div>
         </div>
-        <div class="results-footer">
-          <button class="show-more-btn" id="showMoreBtn">Show more like this →</button>
-          <button class="refine-btn"   id="refineBtn">Refine search ↑</button>
+        <div id="resultsFooter" class="results-footer">
+          <button class="find-more-btn" id="findMoreBtn" hidden>Find me something else →</button>
+          <button class="refine-btn"    id="refineBtn">Refine search ↑</button>
         </div>`;
 
-      document.getElementById('showMoreBtn').addEventListener('click', loadMore);
+      document.getElementById('findMoreBtn').addEventListener('click', findSomethingElse);
       document.getElementById('refineBtn').addEventListener('click', () => expandSearch(true));
     }
 
     /* ── Render card ── */
     function renderCard(s, i) {
-      const hasPoster = !!s.poster;
+      const hasPoster    = !!s.poster;
       const isNonEnglish = s.language && s.language.toLowerCase() !== 'english';
-      const watchUrl = `https://www.google.com/search?q=watch+${encodeURIComponent(s.title)}+streaming+Australia`;
+      const watchUrl     = `https://www.google.com/search?q=watch+${encodeURIComponent(s.title)}+streaming+Australia`;
+      const titleAttr    = escAttr(s.title ?? '');
 
       return `
-        <div class="show-card">
+        <div class="show-card" data-title="${titleAttr}">
           <div class="card-poster${hasPoster ? '' : ' no-img'}">
             <div class="poster-placeholder"><span class="ph-num">${i + 1}</span></div>
-            ${hasPoster ? `<img src="${escAttr(s.poster)}" alt="${escAttr(s.title ?? '')}" loading="lazy" onerror="this.closest('.card-poster').classList.add('no-img')">` : ''}
+            ${hasPoster ? `<img src="${escAttr(s.poster)}" alt="${titleAttr}" loading="lazy" onerror="this.closest('.card-poster').classList.add('no-img')">` : ''}
           </div>
           <div class="card-info">
             <div class="card-badges">
@@ -969,15 +1191,50 @@
             </div>
             ${s.runtime ? `<span class="show-runtime">${escHtml(s.runtime)}</span>` : ''}
             ${s.reason  ? `<p class="show-reason">${escHtml(s.reason)}</p>` : ''}
-            <a class="watch-link" href="${escAttr(watchUrl)}" target="_blank" rel="noopener noreferrer">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
-              Where to watch
-            </a>
+            <div class="card-bottom-row">
+              <a class="watch-link" href="${escAttr(watchUrl)}" target="_blank" rel="noopener noreferrer">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                Where to watch
+              </a>
+              <div class="card-actions">
+                <button class="action-btn" data-action="seen">✓ Seen it</button>
+                <span class="action-sep">·</span>
+                <button class="action-btn action-nope" data-action="nope">✕ Not this</button>
+              </div>
+            </div>
           </div>
         </div>`;
     }
+
+    /* ── Card action delegation (single listener, survives re-renders) ── */
+    resultsEl.addEventListener('click', e => {
+      // "Seen it"
+      const seenBtn = e.target.closest('[data-action="seen"]');
+      if (seenBtn) {
+        const card  = seenBtn.closest('.show-card');
+        const title = card?.dataset.title;
+        if (card && title) dismissCard(card, title, 'seen', null);
+        return;
+      }
+      // "Not this" — show reason picker
+      const nopeBtn = e.target.closest('[data-action="nope"]');
+      if (nopeBtn) {
+        const card = nopeBtn.closest('.show-card');
+        if (card) showReasonPicker(card);
+        return;
+      }
+      // Reason selected
+      const reasonBtn = e.target.closest('.reason-btn');
+      if (reasonBtn) {
+        const card   = reasonBtn.closest('.show-card');
+        const title  = card?.dataset.title;
+        const reason = reasonBtn.dataset.reason;
+        if (card && title) dismissCard(card, title, 'nope', reason);
+        return;
+      }
+    });
 
     /* ── Helpers ── */
     function escHtml(str) {

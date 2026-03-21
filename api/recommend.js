@@ -12,40 +12,33 @@ For each recommendation provide:
 
 Return only valid JSON matching the schema. No markdown, no extra text.`;
 
-function buildUserPrompt(mood, refinements, exclude, history) {
+function buildUserPrompt(mood, refinements, exclude, history, watched, rejected) {
   let text = mood.trim();
 
-  // Refinement constraints
+  // Format constraint
   if (refinements) {
     const formatMap = {
       movie:       'Only recommend movies — no TV series or documentaries.',
       series:      'Only recommend TV series — no movies or documentaries.',
       documentary: 'Only recommend documentaries.',
     };
-    const langMap = {
-      english: 'Only recommend English-language content.',
-      tamil:   'Only recommend Tamil-language content.',
-      korean:  'Only recommend Korean-language content.',
-      hindi:   'Only recommend Hindi-language content.',
-      other:   'Avoid English, Tamil, Korean, and Hindi — recommend other world languages.',
-    };
-    const lengthMap = {
-      short: 'Only recommend films under 2 hours runtime.',
-      long:  'Only recommend films 2 hours or longer.',
-      mini:  'Only recommend mini-series or limited series (fewer than 10 episodes).',
-    };
-    const parts = [
-      formatMap[refinements.format],
-      langMap[refinements.language],
-      lengthMap[refinements.length],
-    ].filter(Boolean);
+    const parts = [formatMap[refinements.format]].filter(Boolean);
     if (parts.length) text += '\n\nConstraints: ' + parts.join(' ');
   }
 
-  // Exclude already-shown titles
-  const excludeList = Array.isArray(exclude) ? exclude.filter(Boolean) : [];
-  if (excludeList.length) {
-    text += `\n\nDo not recommend any of these titles the user has already seen: ${excludeList.map(t => `"${t}"`).join(', ')}.`;
+  // Combine session exclude + persistent watched into one "don't suggest" list
+  const watchedList  = Array.isArray(watched) ? watched.filter(Boolean).slice(0, 40) : [];
+  const excludeList  = Array.isArray(exclude)  ? exclude.filter(Boolean)              : [];
+  const allExclude   = [...new Set([...excludeList, ...watchedList])];
+  if (allExclude.length) {
+    text += `\n\nDo not recommend any of these titles: ${allExclude.map(t => `"${t}"`).join(', ')}.`;
+  }
+
+  // Rejected titles with reasons — avoid similar content
+  const rejectedList = Array.isArray(rejected) ? rejected.filter(r => r && r.title && r.reason) : [];
+  if (rejectedList.length) {
+    text += `\n\nThe user rejected these suggestions — avoid similar content:\n`;
+    text += rejectedList.map(r => `- "${r.title}" rejected because: ${r.reason}`).join('\n');
   }
 
   // Personalisation from search history
@@ -97,15 +90,19 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { mood, history, refinements, exclude } = req.body ?? {};
+  const { mood, history, refinements, exclude, watched, rejected, count } = req.body ?? {};
 
   if (!mood || typeof mood !== 'string' || !mood.trim()) {
     return res.status(400).json({ error: 'mood is required' });
   }
 
-  console.log('[recommend] mood:', mood.trim(), '| refinements:', JSON.stringify(refinements ?? {}));
+  // count: how many results to return (3 for conversational top-ups, 5 for initial)
+  const resultCount = (Number.isInteger(count) && count >= 2 && count <= 5) ? count : 5;
 
-  const userPrompt = buildUserPrompt(mood, refinements, exclude, history);
+  const rejectedCount = Array.isArray(rejected) ? rejected.length : 0;
+  console.log('[recommend] mood:', mood.trim(), '| refinements:', JSON.stringify(refinements ?? {}), '| count:', resultCount, '| rejected:', rejectedCount);
+
+  const userPrompt = buildUserPrompt(mood, refinements, exclude, history, watched, rejected);
 
   const requestBody = {
     systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
@@ -117,8 +114,8 @@ export default async function handler(req, res) {
         properties: {
           recommendations: {
             type: 'array',
-            minItems: 5,
-            maxItems: 5,
+            minItems: resultCount,
+            maxItems: resultCount,
             items: {
               type: 'object',
               properties: {
