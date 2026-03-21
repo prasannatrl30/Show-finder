@@ -54,7 +54,6 @@
 
     /* ─── WORDMARK ─── */
     .wordmark {
-      align-self: flex-start;
       font-size: 1rem;
       font-weight: 700;
       color: var(--text);
@@ -62,6 +61,7 @@
       margin-bottom: 1.75rem;
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 0.3rem;
     }
     .wordmark-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
@@ -72,6 +72,7 @@
       font-weight: 500;
       color: var(--muted);
       margin-bottom: 0.45rem;
+      text-align: center;
     }
     .welcome-back span { color: var(--accent); font-weight: 600; }
 
@@ -256,11 +257,12 @@
     .mood-chips-wrap {
       width: 100%;
       margin-top: 0.55rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     .chips-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      text-align: center;
       margin-bottom: 0.35rem;
     }
     .mood-chips-label {
@@ -281,10 +283,11 @@
       text-decoration: underline;
       text-underline-offset: 2px;
       transition: color 0.15s;
+      margin-top: 0.4rem;
     }
     .clear-history-btn:hover { color: var(--accent); }
 
-    .mood-chips-row { display: flex; gap: 0.35rem; overflow-x: auto; scrollbar-width: none; }
+    .mood-chips-row { display: flex; gap: 0.35rem; overflow-x: auto; scrollbar-width: none; justify-content: center; flex-wrap: wrap; }
     .mood-chips-row::-webkit-scrollbar { display: none; }
     .mood-chip {
       flex-shrink: 0;
@@ -735,12 +738,12 @@
       <div class="mood-chips-wrap">
         <div class="chips-header">
           <div class="mood-chips-label" id="chipsLabel">Quick picks</div>
-          <button class="clear-history-btn" id="clearHistoryBtn" hidden>Clear history</button>
         </div>
         <div id="welcomeBack" class="welcome-back" hidden>
           Welcome back — <span>picks based on your history</span>
         </div>
         <div class="mood-chips-row" id="moodChipsRow"></div>
+        <button class="clear-history-btn" id="clearHistoryBtn" hidden>Clear history</button>
       </div>
     </div>
 
