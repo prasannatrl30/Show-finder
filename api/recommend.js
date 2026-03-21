@@ -60,25 +60,41 @@ async function enrichWithTMDB(show) {
   }
   try {
     const cleanTitle = show.title.replace(/\s*[\[(]?\d{4}[\])]?\s*$/, '').trim();
-    const url = `https://api.themoviedb.org/3/search/multi?query=${encodeURIComponent(cleanTitle)}&api_key=${TMDB_KEY}&include_adult=false&language=en-US`;
-    const res  = await fetch(url);
-    const data = await res.json();
+    const searchUrl  = `https://api.themoviedb.org/3/search/multi?query=${encodeURIComponent(cleanTitle)}&api_key=${TMDB_KEY}&include_adult=false&language=en-US`;
+    const searchRes  = await fetch(searchUrl);
+    const searchData = await searchRes.json();
 
-    const candidates = (data.results ?? []).filter(
+    const candidates = (searchData.results ?? []).filter(
       r => r.media_type === 'movie' || r.media_type === 'tv'
     );
     const result = candidates.find(r => r.poster_path) ?? candidates[0] ?? null;
 
-    console.log(`[recommend] TMDB "${show.title}" → ${res.status} | ${candidates.length} hits | poster=${result?.poster_path ?? 'none'}`);
+    console.log(`[recommend] TMDB "${show.title}" → ${searchRes.status} | ${candidates.length} hits | poster=${result?.poster_path ?? 'none'}`);
 
-    if (result) {
-      return {
-        ...show,
-        poster:     result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}` : null,
-        imdbRating: result.vote_average ? result.vote_average.toFixed(1) : null,
-        year:       (result.release_date ?? result.first_air_date ?? '').slice(0, 4) || null,
-      };
+    if (!result) return show;
+
+    // Fetch AU watch providers in parallel (we now have the TMDB ID)
+    const mediaType    = result.media_type; // 'movie' or 'tv'
+    const providersUrl = `https://api.themoviedb.org/3/${mediaType}/${result.id}/watch/providers?api_key=${TMDB_KEY}`;
+
+    let streamingAU = [];
+    try {
+      const provRes  = await fetch(providersUrl);
+      const provData = await provRes.json();
+      // flatrate = subscription streaming only (not rent/buy)
+      streamingAU = (provData.results?.AU?.flatrate ?? []).map(p => p.provider_name);
+      console.log(`[recommend] Providers "${show.title}" → AU flatrate: [${streamingAU.join(', ') || 'none'}]`);
+    } catch (e) {
+      console.error('[recommend] Providers fetch failed for', show.title, e?.message);
     }
+
+    return {
+      ...show,
+      poster:      result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}` : null,
+      imdbRating:  result.vote_average ? result.vote_average.toFixed(1) : null,
+      year:        (result.release_date ?? result.first_air_date ?? '').slice(0, 4) || null,
+      streamingAU,
+    };
   } catch (e) {
     console.error('[recommend] TMDB lookup failed for', show.title, e?.message);
   }
