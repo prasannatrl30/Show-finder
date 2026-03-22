@@ -990,7 +990,7 @@
         <div class="right-now-header">
           <div class="right-now-labels">
             <span class="right-now-label" id="rightNowLabel">Right now</span>
-            <span class="right-now-subtitle">picked for right now</span>
+            <span class="right-now-subtitle" id="rightNowSubtitle">picked for right now</span>
           </div>
           <button class="right-now-refresh" id="rightNowRefresh" aria-label="Refresh picks" title="Refresh picks">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
@@ -1596,6 +1596,52 @@
 
     let rightNowShows = [];
 
+    /* Build a weather-aware Right Now label from adjective + current time */
+    function buildWeatherLabel(weatherAdj) {
+      const now  = new Date();
+      const day  = now.getDay();
+      const hour = now.getHours();
+      const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      const d    = days[day];
+      const adj  = weatherAdj.charAt(0).toUpperCase() + weatherAdj.slice(1);
+      if (day === 5 && hour >= 17) return `${adj} Friday night`;
+      if (day === 6) {
+        if (hour < 12) return `${adj} Saturday morning`;
+        if (hour < 17) return `${adj} Saturday afternoon`;
+        return `${adj} Saturday night`;
+      }
+      if (day === 0) {
+        if (hour < 12) return `${adj} Sunday morning`;
+        if (hour < 17) return `${adj} Sunday afternoon`;
+        return `${adj} Sunday evening`;
+      }
+      if (hour < 12) return `${adj} ${d} morning`;
+      if (hour < 18) return `${adj} ${d} afternoon`;
+      return `${adj} ${d} evening`;
+    }
+
+    /* Update the Right Now header with live weather + location context */
+    function updateRightNowHeader(ctx) {
+      if (!ctx) return;
+      const labelEl    = document.getElementById('rightNowLabel');
+      const subtitleEl = document.getElementById('rightNowSubtitle');
+
+      // Weather-aware label (e.g. "Rainy Tuesday evening")
+      if (ctx.weatherAdj && labelEl) {
+        labelEl.textContent = buildWeatherLabel(ctx.weatherAdj);
+      }
+
+      // Subtitle: emoji · City · temp°C · condition
+      if (subtitleEl) {
+        const parts = [];
+        if (ctx.emoji)          parts.push(ctx.emoji);
+        if (ctx.city)           parts.push(ctx.city);
+        if (ctx.temp != null)   parts.push(`${ctx.temp}°C`);
+        if (ctx.weather)        parts.push(ctx.weather);
+        if (parts.length) subtitleEl.textContent = parts.join(' · ');
+      }
+    }
+
     function renderRightNowSkeletons() {
       const el = document.getElementById('rightNowCards');
       if (!el) return;
@@ -1652,10 +1698,12 @@
           }),
         });
         if (!res.ok) throw new Error('API error');
-        const data = await res.json();
+        const data  = await res.json();
         const shows = data.recommendations ?? [];
         if (!shows.length) throw new Error('No results');
         renderRightNowCards(shows);
+        // Update header with live weather + location (may be null if lookup failed)
+        updateRightNowHeader(data.locationContext ?? null);
       } catch {
         const el = document.getElementById('rightNowCards');
         if (el) el.innerHTML = '<p class="rn-error">Couldn\'t load picks right now.</p>';

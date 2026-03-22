@@ -12,8 +12,86 @@ For each recommendation provide:
 
 Return only valid JSON matching the schema. No markdown, no extra text.`;
 
-function buildUserPrompt(mood, refinements, exclude, history, watched, rejected) {
+/* ── Weather helpers ── */
+function interpretWeatherCode(code) {
+  if (code === 0)                                            return ['clear and sunny',  'sunny'];
+  if (code >= 1  && code <= 3)                               return ['partly cloudy',    'cloudy'];
+  if (code === 45 || code === 48)                            return ['foggy',             'foggy'];
+  if ((code >= 51 && code <= 55) || (code >= 61 && code <= 65)) return ['rainy',         'rainy'];
+  if (code >= 71 && code <= 75)                              return ['snowing',           'snowy'];
+  if (code >= 80 && code <= 82)                              return ['showery',           'showery'];
+  if (code >= 95 && code <= 99)                              return ['stormy',            'stormy'];
+  return ['overcast', 'overcast'];
+}
+
+function weatherEmoji(code) {
+  if (code === 0)                                            return '☀️';
+  if (code >= 1  && code <= 3)                               return '⛅';
+  if (code === 45 || code === 48)                            return '🌫️';
+  if ((code >= 51 && code <= 55) || (code >= 61 && code <= 65)) return '🌧️';
+  if (code >= 71 && code <= 75)                              return '❄️';
+  if (code >= 80 && code <= 82)                              return '🌦️';
+  if (code >= 95 && code <= 99)                              return '⛈️';
+  return '🌤️';
+}
+
+/* ── Location + weather from Vercel headers + Open-Meteo ── */
+async function getLocationAndWeather(req) {
+  const country = ((req.headers['x-vercel-ip-country']) || 'AU').toUpperCase();
+  const rawCity = req.headers['x-vercel-ip-city'];
+  // Vercel URL-encodes city names with non-ASCII characters
+  const city    = rawCity ? decodeURIComponent(rawCity) : null;
+
+  console.log(`[location] country=${country} city=${city ?? 'unknown'}`);
+
+  if (!city) {
+    return { country, city: null, weather: null, weatherAdj: null, temp: null, emoji: null };
+  }
+
+  try {
+    // Geocode city → lat/lng
+    const geoRes  = await fetch(
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`
+    );
+    const geoData = await geoRes.json();
+    const loc     = geoData.results?.[0];
+
+    if (!loc) {
+      console.log(`[location] Geocode returned no results for "${city}"`);
+      return { country, city, weather: null, weatherAdj: null, temp: null, emoji: null };
+    }
+
+    // Current weather from Open-Meteo (free, no key required)
+    const wxRes  = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current=temperature_2m,weathercode&timezone=auto`
+    );
+    const wxData  = await wxRes.json();
+    const current = wxData.current;
+    const code    = current?.weathercode ?? 0;
+    const temp    = current?.temperature_2m != null ? Math.round(current.temperature_2m) : null;
+
+    const [weather, weatherAdj] = interpretWeatherCode(code);
+    const emoji                 = weatherEmoji(code);
+
+    console.log(`[location] ${city}, ${country}: ${weather} (code=${code}), ${temp}°C`);
+
+    return { country, city, weather, weatherAdj, temp, emoji };
+  } catch (e) {
+    console.error('[location] Weather/geocoding failed:', e.message);
+    return { country, city, weather: null, weatherAdj: null, temp: null, emoji: null };
+  }
+}
+
+/* ── Prompt builder ── */
+function buildUserPrompt(mood, refinements, exclude, history, watched, rejected, locationCtx) {
   let text = mood.trim();
+
+  // Rich location + weather context for Gemini
+  if (locationCtx?.city && locationCtx?.weather && locationCtx?.temp != null) {
+    text += `\n\nContext: The user is in ${locationCtx.city}, ${locationCtx.country}. It is currently ${locationCtx.weather} outside and ${locationCtx.temp}°C. Factor all of this into your recommendations — a rainy ${locationCtx.city} evening calls for different content than a sunny afternoon. Recommend content that genuinely fits this exact moment.`;
+  } else if (locationCtx?.country) {
+    text += `\n\nContext: The user is in ${locationCtx.country}.`;
+  }
 
   // Format constraint
   if (refinements) {
@@ -27,9 +105,9 @@ function buildUserPrompt(mood, refinements, exclude, history, watched, rejected)
   }
 
   // Combine session exclude + persistent watched into one "don't suggest" list
-  const watchedList  = Array.isArray(watched) ? watched.filter(Boolean).slice(0, 40) : [];
-  const excludeList  = Array.isArray(exclude)  ? exclude.filter(Boolean)              : [];
-  const allExclude   = [...new Set([...excludeList, ...watchedList])];
+  const watchedList = Array.isArray(watched) ? watched.filter(Boolean).slice(0, 40) : [];
+  const excludeList = Array.isArray(exclude)  ? exclude.filter(Boolean)              : [];
+  const allExclude  = [...new Set([...excludeList, ...watchedList])];
   if (allExclude.length) {
     text += `\n\nDo not recommend any of these titles: ${allExclude.map(t => `"${t}"`).join(', ')}.`;
   }
@@ -52,7 +130,8 @@ function buildUserPrompt(mood, refinements, exclude, history, watched, rejected)
   return text;
 }
 
-async function enrichWithTMDB(show) {
+/* ── TMDB enrichment — poster, rating, streaming providers ── */
+async function enrichWithTMDB(show, countryCode = 'AU') {
   const TMDB_KEY = process.env.TMDB_API_KEY;
   if (!TMDB_KEY) {
     console.log('[recommend] TMDB_KEY not configured');
@@ -73,17 +152,18 @@ async function enrichWithTMDB(show) {
 
     if (!result) return show;
 
-    // Fetch AU watch providers in parallel (we now have the TMDB ID)
-    const mediaType    = result.media_type; // 'movie' or 'tv'
+    // Fetch watch providers for the user's country (flatrate = subscription only)
+    const mediaType    = result.media_type;
     const providersUrl = `https://api.themoviedb.org/3/${mediaType}/${result.id}/watch/providers?api_key=${TMDB_KEY}`;
 
-    let streamingAU = [];
+    let streaming = [];
     try {
       const provRes  = await fetch(providersUrl);
       const provData = await provRes.json();
-      // flatrate = subscription streaming only (not rent/buy)
-      streamingAU = (provData.results?.AU?.flatrate ?? []).map(p => p.provider_name);
-      console.log(`[recommend] Providers "${show.title}" → AU flatrate: [${streamingAU.join(', ') || 'none'}]`);
+      // Use the user's actual country code, fall back to AU
+      const regionData = provData.results?.[countryCode] ?? provData.results?.['AU'] ?? {};
+      streaming = (regionData.flatrate ?? []).map(p => p.provider_name);
+      console.log(`[recommend] Providers "${show.title}" [${countryCode}] flatrate: [${streaming.join(', ') || 'none'}]`);
     } catch (e) {
       console.error('[recommend] Providers fetch failed for', show.title, e?.message);
     }
@@ -93,7 +173,7 @@ async function enrichWithTMDB(show) {
       poster:      result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}` : null,
       imdbRating:  result.vote_average ? result.vote_average.toFixed(1) : null,
       year:        (result.release_date ?? result.first_air_date ?? '').slice(0, 4) || null,
-      streamingAU,
+      streamingAU: streaming,
     };
   } catch (e) {
     console.error('[recommend] TMDB lookup failed for', show.title, e?.message);
@@ -101,6 +181,7 @@ async function enrichWithTMDB(show) {
   return show;
 }
 
+/* ── Main handler ── */
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -112,13 +193,22 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'mood is required' });
   }
 
-  // count: how many results to return (3 for conversational top-ups, 5 for initial)
-  const resultCount = (Number.isInteger(count) && count >= 2 && count <= 5) ? count : 5;
-
+  const resultCount   = (Number.isInteger(count) && count >= 2 && count <= 5) ? count : 5;
   const rejectedCount = Array.isArray(rejected) ? rejected.length : 0;
+
   console.log('[recommend] mood:', mood.trim(), '| refinements:', JSON.stringify(refinements ?? {}), '| count:', resultCount, '| rejected:', rejectedCount);
 
-  const userPrompt = buildUserPrompt(mood, refinements, exclude, history, watched, rejected);
+  // Fetch location + weather non-blocking — 3 s timeout before falling back
+  const locationCtx = await Promise.race([
+    getLocationAndWeather(req),
+    new Promise(resolve =>
+      setTimeout(() => resolve({ country: 'AU', city: null, weather: null, weatherAdj: null, temp: null, emoji: null }), 3000)
+    ),
+  ]);
+
+  const userPrompt = buildUserPrompt(mood, refinements, exclude, history, watched, rejected, locationCtx);
+
+  console.log('[recommend] Full prompt:\n', userPrompt);
 
   const requestBody = {
     systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
@@ -185,8 +275,12 @@ export default async function handler(req, res) {
     try { parsed = JSON.parse(text); }
     catch (e) { throw new Error(`JSON parse failed: ${e.message} — raw: ${text?.slice(0, 300)}`); }
 
-    const enriched = await Promise.all(parsed.recommendations.map(enrichWithTMDB));
-    res.json({ recommendations: enriched });
+    console.log('[recommend] Raw Gemini response:', text);
+
+    const countryCode = locationCtx.country || 'AU';
+    const enriched    = await Promise.all(parsed.recommendations.map(s => enrichWithTMDB(s, countryCode)));
+
+    res.json({ recommendations: enriched, locationContext: locationCtx });
   } catch (err) {
     console.error('Recommendation error:', err?.message ?? err);
     res.status(500).json({ error: 'Failed to get recommendations. Please try again.' });
