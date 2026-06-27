@@ -1,4 +1,8 @@
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${process.env.GEMINI_API_KEY}`;
+import Anthropic from '@anthropic-ai/sdk';
+
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+const MODEL = 'claude-haiku-4-5-20251001';
 
 const SYSTEM_PROMPT = `You are an expert at matching people with the perfect thing to watch. You have deep knowledge of global cinema and television — Hollywood, Bollywood, Korean, Tamil, Japanese, French, and beyond.
 
@@ -8,30 +12,28 @@ For each recommendation provide:
 - format: exactly one of "Movie", "Series", "Documentary", "Limited Series"
 - language: primary language (e.g. "English", "Tamil", "Korean", "Hindi", "French")
 - runtime: for movies "1h 52m" style; for series "3 seasons" or "6 episodes"; for limited series "N episodes"
-- reason: 10–15 words max — punchy and evocative, not a synopsis
-
-Return only valid JSON matching the schema. No markdown, no extra text.`;
+- reason: 10–15 words max — punchy and evocative, not a synopsis`;
 
 /* ── Weather helpers ── */
 function interpretWeatherCode(code) {
-  if (code === 0)                                            return ['clear and sunny',  'sunny'];
-  if (code >= 1  && code <= 3)                               return ['partly cloudy',    'cloudy'];
-  if (code === 45 || code === 48)                            return ['foggy',             'foggy'];
-  if ((code >= 51 && code <= 55) || (code >= 61 && code <= 65)) return ['rainy',         'rainy'];
-  if (code >= 71 && code <= 75)                              return ['snowing',           'snowy'];
-  if (code >= 80 && code <= 82)                              return ['showery',           'showery'];
-  if (code >= 95 && code <= 99)                              return ['stormy',            'stormy'];
+  if (code === 0)                                                    return ['clear and sunny',  'sunny'];
+  if (code >= 1  && code <= 3)                                       return ['partly cloudy',    'cloudy'];
+  if (code === 45 || code === 48)                                    return ['foggy',             'foggy'];
+  if ((code >= 51 && code <= 55) || (code >= 61 && code <= 65))     return ['rainy',             'rainy'];
+  if (code >= 71 && code <= 75)                                      return ['snowing',           'snowy'];
+  if (code >= 80 && code <= 82)                                      return ['showery',           'showery'];
+  if (code >= 95 && code <= 99)                                      return ['stormy',            'stormy'];
   return ['overcast', 'overcast'];
 }
 
 function weatherEmoji(code) {
-  if (code === 0)                                            return '☀️';
-  if (code >= 1  && code <= 3)                               return '⛅';
-  if (code === 45 || code === 48)                            return '🌫️';
-  if ((code >= 51 && code <= 55) || (code >= 61 && code <= 65)) return '🌧️';
-  if (code >= 71 && code <= 75)                              return '❄️';
-  if (code >= 80 && code <= 82)                              return '🌦️';
-  if (code >= 95 && code <= 99)                              return '⛈️';
+  if (code === 0)                                                    return '☀️';
+  if (code >= 1  && code <= 3)                                       return '⛅';
+  if (code === 45 || code === 48)                                    return '🌫️';
+  if ((code >= 51 && code <= 55) || (code >= 61 && code <= 65))     return '🌧️';
+  if (code >= 71 && code <= 75)                                      return '❄️';
+  if (code >= 80 && code <= 82)                                      return '🌦️';
+  if (code >= 95 && code <= 99)                                      return '⛈️';
   return '🌤️';
 }
 
@@ -39,7 +41,6 @@ function weatherEmoji(code) {
 async function getLocationAndWeather(req) {
   const country = ((req.headers['x-vercel-ip-country']) || 'AU').toUpperCase();
   const rawCity = req.headers['x-vercel-ip-city'];
-  // Vercel URL-encodes city names with non-ASCII characters
   const city    = rawCity ? decodeURIComponent(rawCity) : null;
 
   console.log(`[location] country=${country} city=${city ?? 'unknown'}`);
@@ -49,7 +50,6 @@ async function getLocationAndWeather(req) {
   }
 
   try {
-    // Geocode city → lat/lng
     const geoRes  = await fetch(
       `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`
     );
@@ -61,7 +61,6 @@ async function getLocationAndWeather(req) {
       return { country, city, weather: null, weatherAdj: null, temp: null, emoji: null };
     }
 
-    // Current weather from Open-Meteo (free, no key required)
     const wxRes  = await fetch(
       `https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current=temperature_2m,weathercode&timezone=auto`
     );
@@ -86,14 +85,12 @@ async function getLocationAndWeather(req) {
 function buildUserPrompt(mood, refinements, exclude, history, watched, rejected, locationCtx) {
   let text = mood.trim();
 
-  // Rich location + weather context for Gemini
   if (locationCtx?.city && locationCtx?.weather && locationCtx?.temp != null) {
     text += `\n\nContext: The user is in ${locationCtx.city}, ${locationCtx.country}. It is currently ${locationCtx.weather} outside and ${locationCtx.temp}°C. Factor all of this into your recommendations — a rainy ${locationCtx.city} evening calls for different content than a sunny afternoon. Recommend content that genuinely fits this exact moment.`;
   } else if (locationCtx?.country) {
     text += `\n\nContext: The user is in ${locationCtx.country}.`;
   }
 
-  // Format constraint
   if (refinements) {
     const formatMap = {
       movie:       'Only recommend movies — no TV series or documentaries.',
@@ -104,7 +101,6 @@ function buildUserPrompt(mood, refinements, exclude, history, watched, rejected,
     if (parts.length) text += '\n\nConstraints: ' + parts.join(' ');
   }
 
-  // Combine session exclude + persistent watched into one "don't suggest" list
   const watchedList = Array.isArray(watched) ? watched.filter(Boolean).slice(0, 40) : [];
   const excludeList = Array.isArray(exclude)  ? exclude.filter(Boolean)              : [];
   const allExclude  = [...new Set([...excludeList, ...watchedList])];
@@ -112,14 +108,12 @@ function buildUserPrompt(mood, refinements, exclude, history, watched, rejected,
     text += `\n\nDo not recommend any of these titles: ${allExclude.map(t => `"${t}"`).join(', ')}.`;
   }
 
-  // Rejected titles with reasons — avoid similar content
   const rejectedList = Array.isArray(rejected) ? rejected.filter(r => r && r.title && r.reason) : [];
   if (rejectedList.length) {
     text += `\n\nThe user rejected these suggestions — avoid similar content:\n`;
     text += rejectedList.map(r => `- "${r.title}" rejected because: ${r.reason}`).join('\n');
   }
 
-  // Personalisation from search history
   const pastSearches = Array.isArray(history)
     ? history.filter(h => typeof h === 'string' && h.trim()).slice(0, 3)
     : [];
@@ -152,17 +146,15 @@ async function enrichWithTMDB(show, countryCode = 'AU') {
 
     if (!result) return show;
 
-    // Fetch watch providers for the user's country (flatrate = subscription only)
     const mediaType    = result.media_type;
     const providersUrl = `https://api.themoviedb.org/3/${mediaType}/${result.id}/watch/providers?api_key=${TMDB_KEY}`;
 
     let streaming = [];
     try {
-      const provRes  = await fetch(providersUrl);
-      const provData = await provRes.json();
-      // Use the user's actual country code, fall back to AU
+      const provRes    = await fetch(providersUrl);
+      const provData   = await provRes.json();
       const regionData = provData.results?.[countryCode] ?? provData.results?.['AU'] ?? {};
-      streaming = (regionData.flatrate ?? []).map(p => p.provider_name);
+      streaming        = (regionData.flatrate ?? []).map(p => p.provider_name);
       console.log(`[recommend] Providers "${show.title}" [${countryCode}] flatrate: [${streaming.join(', ') || 'none'}]`);
     } catch (e) {
       console.error('[recommend] Providers fetch failed for', show.title, e?.message);
@@ -207,75 +199,52 @@ export default async function handler(req, res) {
   ]);
 
   const userPrompt = buildUserPrompt(mood, refinements, exclude, history, watched, rejected, locationCtx);
-
   console.log('[recommend] Full prompt:\n', userPrompt);
 
-  const requestBody = {
-    systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-    contents: [{ parts: [{ text: userPrompt }] }],
-    generationConfig: {
-      responseMimeType: 'application/json',
-      responseSchema: {
-        type: 'object',
-        properties: {
-          recommendations: {
-            type: 'array',
-            minItems: resultCount,
-            maxItems: resultCount,
-            items: {
-              type: 'object',
-              properties: {
-                title:    { type: 'string' },
-                genre:    { type: 'string' },
-                format:   { type: 'string' },
-                language: { type: 'string' },
-                runtime:  { type: 'string' },
-                reason:   { type: 'string' },
-              },
-              required: ['title', 'genre', 'format', 'language', 'runtime', 'reason'],
+  // Tool schema for structured JSON output
+  const recommendTool = {
+    name: 'return_recommendations',
+    description: 'Return the film and TV show recommendations as structured data.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        recommendations: {
+          type: 'array',
+          minItems: resultCount,
+          maxItems: resultCount,
+          items: {
+            type: 'object',
+            properties: {
+              title:    { type: 'string', description: 'Plain title, no year' },
+              genre:    { type: 'string', description: 'One short genre label' },
+              format:   { type: 'string', enum: ['Movie', 'Series', 'Documentary', 'Limited Series'] },
+              language: { type: 'string', description: 'Primary language' },
+              runtime:  { type: 'string', description: '"1h 52m" for movies, "3 seasons" for series' },
+              reason:   { type: 'string', description: '10-15 words max, punchy and evocative' },
             },
+            required: ['title', 'genre', 'format', 'language', 'runtime', 'reason'],
           },
         },
-        required: ['recommendations'],
       },
+      required: ['recommendations'],
     },
   };
 
-  const MAX_RETRIES    = 3;
-  const RETRY_DELAY_MS = 2000;
-
-  let response;
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    response = await fetch(GEMINI_URL, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(requestBody),
-    });
-    if (response.status === 503) {
-      console.warn(`[recommend] Gemini 503 — attempt ${attempt}/${MAX_RETRIES}, retrying in ${RETRY_DELAY_MS}ms`);
-      if (attempt < MAX_RETRIES) {
-        await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
-        continue;
-      }
-    }
-    break;
-  }
-
   try {
-    if (!response.ok) {
-      const err = await response.text();
-      throw new Error(`Gemini ${response.status}: ${err}`);
-    }
+    const message = await client.messages.create({
+      model:      MODEL,
+      max_tokens: 1024,
+      system:     SYSTEM_PROMPT,
+      tools:      [recommendTool],
+      tool_choice: { type: 'tool', name: 'return_recommendations' },
+      messages:   [{ role: 'user', content: userPrompt }],
+    });
 
-    const geminiData = await response.json();
-    const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) throw new Error(`Empty Gemini response: ${JSON.stringify(geminiData)}`);
+    const toolUse = message.content.find(c => c.type === 'tool_use');
+    if (!toolUse) throw new Error('No tool_use block in Claude response');
 
-    let parsed;
-    try { parsed = JSON.parse(text); }
-    catch (e) { throw new Error(`JSON parse failed: ${e.message} — raw: ${text?.slice(0, 300)}`); }
-
-    console.log('[recommend] Raw Gemini response:', text);
+    const parsed = toolUse.input;
+    console.log('[recommend] Claude response:', JSON.stringify(parsed));
 
     const countryCode = locationCtx.country || 'AU';
     const enriched    = await Promise.all(parsed.recommendations.map(s => enrichWithTMDB(s, countryCode)));
