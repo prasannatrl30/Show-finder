@@ -1739,9 +1739,13 @@
 
       renderRightNowSkeletons();
 
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 14000); // 14s hard cap
+
       try {
         const res = await fetch('/api/recommend', {
           method: 'POST',
+          signal: controller.signal,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             mood:        slot.prompt,
@@ -1753,14 +1757,20 @@
             rejected:    [],
           }),
         });
-        if (!res.ok) throw new Error('API error');
+        clearTimeout(timer);
+        if (!res.ok) {
+          console.error('[rightNow] API returned', res.status);
+          throw new Error(`API ${res.status}`);
+        }
         const data  = await res.json();
         const shows = data.recommendations ?? [];
         if (!shows.length) throw new Error('No results');
         renderRightNowCards(shows);
         // Update header with live weather + location (may be null if lookup failed)
         updateRightNowHeader(data.locationContext ?? null);
-      } catch {
+      } catch (err) {
+        clearTimeout(timer);
+        console.error('[rightNow] Failed:', err?.message ?? err);
         // Hide the whole section on error rather than showing a broken state
         const section = document.getElementById('rightNowSection');
         if (section) section.hidden = true;
