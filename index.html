@@ -778,6 +778,96 @@
     }
     .empty-chip:hover { border-color: var(--accent); color: var(--accent); }
 
+    /* ─── SURPRISE / MINDLESS SECTION ─── */
+    .surprise-section {
+      width: 100%;
+      margin-top: 1.75rem;
+      text-align: center;
+    }
+    .surprise-label {
+      display: block;
+      font-size: 0.62rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--accent);
+      margin-bottom: 0.2rem;
+    }
+    .surprise-sub {
+      display: block;
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-bottom: 0.8rem;
+    }
+    .surprise-btn {
+      background: none;
+      border: 1.5px solid var(--border-light);
+      border-radius: 100px;
+      padding: 0.55rem 1.35rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text);
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .surprise-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .surprise-btn:disabled { opacity: 0.45; cursor: default; }
+    .sp-cards {
+      display: flex;
+      gap: 0.65rem;
+      justify-content: center;
+      padding: 0.1rem 0 0.15rem;
+    }
+    .sp-card {
+      flex-shrink: 0;
+      width: 108px;
+      cursor: pointer;
+      transition: transform 0.15s;
+      text-align: left;
+    }
+    .sp-card:hover { transform: translateY(-3px); }
+    .sp-poster {
+      width: 108px; height: 162px;
+      border-radius: 10px; overflow: hidden;
+      background: var(--surface); position: relative;
+      margin-bottom: 0.35rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .sp-poster img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .sp-poster.sp-no-img img { display: none; }
+    .sp-poster-ph {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic; font-size: 1.6rem;
+      color: var(--border-light);
+      background: linear-gradient(150deg, #EEEAE3 0%, #E4DDD3 100%);
+    }
+    .sp-title {
+      font-size: 0.72rem; font-weight: 600;
+      color: var(--text); line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .sp-meta { font-size: 0.62rem; color: var(--muted); margin-top: 0.1rem; }
+    .sp-footer {
+      display: flex; align-items: center; justify-content: center;
+      margin-top: 0.7rem;
+    }
+    .sp-refresh {
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); padding: 0.2rem; line-height: 0;
+      transition: color 0.15s;
+    }
+    .sp-refresh:hover { color: var(--accent); }
+    .sp-refresh.spinning svg { animation: spin 0.7s linear infinite; }
+
     /* ─── MOBILE ─── */
     @media (max-width: 640px) {
       /* More breathing room: page top + heading → card gap */
@@ -872,6 +962,17 @@
         </div>
         <div class="mood-chips-row" id="moodChipsRow"></div>
         <button class="clear-history-btn" id="clearHistoryBtn" hidden>Clear history</button>
+      </div>
+
+      <!-- Mindless picks — user-triggered, loads on button click -->
+      <div class="surprise-section" id="surpriseSection">
+        <span class="surprise-label">Feeling mindless?</span>
+        <span class="surprise-sub">nothing too heavy</span>
+        <div id="surpriseBody">
+          <button class="surprise-btn" id="surpriseBtn" type="button">
+            Surprise me <span>→</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -998,6 +1099,97 @@
     });
 
     renderChips();
+
+    /* ── Mindless / Surprise picks ── */
+    let surpriseRunning = false;
+
+    function attachSurpriseBtn() {
+      const btn = document.getElementById('surpriseBtn');
+      if (btn) btn.addEventListener('click', loadSurprise);
+    }
+
+    async function loadSurprise() {
+      if (surpriseRunning) return;
+      surpriseRunning = true;
+
+      const btn  = document.getElementById('surpriseBtn');
+      const body = document.getElementById('surpriseBody');
+      if (btn) { btn.disabled = true; btn.innerHTML = 'Finding picks…'; }
+
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 15000);
+
+      try {
+        const res = await fetch('/api/recommend', {
+          method: 'POST',
+          signal: controller.signal,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mood:        'Something easy and entertaining — light, fun, bingeable, no heavy thinking required. Perfect for completely switching off.',
+            count:       3,
+            watched:     getWatched(),
+            exclude:     [],
+            refinements: {},
+            history:     [],
+            rejected:    [],
+          }),
+        });
+        clearTimeout(timer);
+        if (!res.ok) throw new Error(`API ${res.status}`);
+        const data  = await res.json();
+        const shows = data.recommendations ?? [];
+        if (!shows.length) throw new Error('empty');
+        renderSurpriseCards(shows, body);
+      } catch (err) {
+        clearTimeout(timer);
+        console.error('[surprise]', err?.message ?? err);
+        body.innerHTML = `<button class="surprise-btn" id="surpriseBtn" type="button">Try again <span>→</span></button>`;
+        attachSurpriseBtn();
+      } finally {
+        surpriseRunning = false;
+      }
+    }
+
+    function renderSurpriseCards(shows, body) {
+      const cards = shows.map((s, i) => {
+        const hp = s.poster && s.poster.startsWith('http');
+        return `
+          <div class="sp-card" data-title="${escAttr(s.title ?? '')}" role="button" tabindex="0" aria-label="${escAttr(s.title ?? '')}">
+            <div class="sp-poster${hp ? '' : ' sp-no-img'}">
+              <div class="sp-poster-ph">${i + 1}</div>
+              ${hp ? `<img src="${escAttr(s.poster)}" alt="${escAttr(s.title ?? '')}" loading="lazy" onerror="this.closest('.sp-poster').classList.add('sp-no-img')">` : ''}
+            </div>
+            <div class="sp-title">${escHtml(s.title ?? '')}</div>
+            <div class="sp-meta">${escHtml(s.format ?? '')}${s.imdbRating ? ` · ★ ${escHtml(s.imdbRating)}` : ''}</div>
+          </div>`;
+      }).join('');
+
+      body.innerHTML = `
+        <div class="sp-cards" id="spCards">${cards}</div>
+        <div class="sp-footer">
+          <button class="sp-refresh" id="spRefresh" aria-label="Refresh picks">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+          </button>
+        </div>`;
+
+      document.getElementById('spCards').addEventListener('click', e => {
+        const card = e.target.closest('.sp-card');
+        if (!card) return;
+        submitMood(`Movies and shows like "${card.dataset.title}"`);
+      });
+
+      document.getElementById('spRefresh').addEventListener('click', () => {
+        const b = document.getElementById('surpriseBody');
+        b.innerHTML = `<button class="surprise-btn" id="surpriseBtn" type="button">Surprise me <span>→</span></button>`;
+        attachSurpriseBtn();
+        loadSurprise();
+      });
+    }
+
+    attachSurpriseBtn();
 
     /* ── Rotating placeholder ── */
     const PLACEHOLDERS = [
