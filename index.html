@@ -867,6 +867,15 @@
     }
     .sp-refresh:hover { color: var(--accent); }
     .sp-refresh.spinning svg { animation: spin 0.7s linear infinite; }
+    .sp-skeleton .sp-poster {
+      background: linear-gradient(90deg, var(--surface) 0%, var(--border) 50%, var(--surface) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s ease-in-out infinite;
+    }
+    .sp-skel-line {
+      height: 9px; border-radius: 4px;
+      background: var(--surface); margin-top: 0.28rem;
+    }
 
     /* ─── MOBILE ─── */
     @media (max-width: 640px) {
@@ -964,14 +973,25 @@
         <button class="clear-history-btn" id="clearHistoryBtn" hidden>Clear history</button>
       </div>
 
-      <!-- Mindless picks — user-triggered, loads on button click -->
+      <!-- Mindless picks — auto-loads, Surprise me refreshes -->
       <div class="surprise-section" id="surpriseSection">
         <span class="surprise-label">Feeling mindless?</span>
         <span class="surprise-sub">nothing too heavy</span>
         <div id="surpriseBody">
-          <button class="surprise-btn" id="surpriseBtn" type="button">
-            Surprise me <span>→</span>
-          </button>
+          <div class="sp-cards" id="spCards">
+            <div class="sp-card sp-skeleton"><div class="sp-poster"><div class="sp-poster-ph"></div></div><div class="sp-skel-line" style="width:80%"></div><div class="sp-skel-line" style="width:50%;margin-top:0.2rem"></div></div>
+            <div class="sp-card sp-skeleton"><div class="sp-poster"><div class="sp-poster-ph"></div></div><div class="sp-skel-line" style="width:80%"></div><div class="sp-skel-line" style="width:50%;margin-top:0.2rem"></div></div>
+            <div class="sp-card sp-skeleton"><div class="sp-poster"><div class="sp-poster-ph"></div></div><div class="sp-skel-line" style="width:80%"></div><div class="sp-skel-line" style="width:50%;margin-top:0.2rem"></div></div>
+          </div>
+          <div class="sp-footer">
+            <button class="surprise-btn" id="surpriseBtn" type="button" disabled>
+              <svg class="sp-spin" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 0.8s linear infinite">
+                <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+              Loading…
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1103,18 +1123,28 @@
     /* ── Mindless / Surprise picks ── */
     let surpriseRunning = false;
 
-    function attachSurpriseBtn() {
+    const SKELETONS = `
+      <div class="sp-card sp-skeleton"><div class="sp-poster"><div class="sp-poster-ph"></div></div><div class="sp-skel-line" style="width:80%"></div><div class="sp-skel-line" style="width:50%;margin-top:0.2rem"></div></div>
+      <div class="sp-card sp-skeleton"><div class="sp-poster"><div class="sp-poster-ph"></div></div><div class="sp-skel-line" style="width:80%"></div><div class="sp-skel-line" style="width:50%;margin-top:0.2rem"></div></div>
+      <div class="sp-card sp-skeleton"><div class="sp-poster"><div class="sp-poster-ph"></div></div><div class="sp-skel-line" style="width:80%"></div><div class="sp-skel-line" style="width:50%;margin-top:0.2rem"></div></div>`;
+
+    function setSurpriseLoading() {
+      document.getElementById('spCards').innerHTML = SKELETONS;
       const btn = document.getElementById('surpriseBtn');
-      if (btn) btn.addEventListener('click', loadSurprise);
+      btn.disabled = true;
+      btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 0.8s linear infinite"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Loading…`;
+    }
+
+    function setSurpriseReady(label = 'Surprise me') {
+      const btn = document.getElementById('surpriseBtn');
+      btn.disabled = false;
+      btn.innerHTML = `${label} <span>→</span>`;
     }
 
     async function loadSurprise() {
       if (surpriseRunning) return;
       surpriseRunning = true;
-
-      const btn  = document.getElementById('surpriseBtn');
-      const body = document.getElementById('surpriseBody');
-      if (btn) { btn.disabled = true; btn.innerHTML = 'Finding picks…'; }
+      setSurpriseLoading();
 
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 15000);
@@ -1139,18 +1169,19 @@
         const data  = await res.json();
         const shows = data.recommendations ?? [];
         if (!shows.length) throw new Error('empty');
-        renderSurpriseCards(shows, body);
+        renderSurpriseCards(shows);
+        setSurpriseReady('Surprise me');
       } catch (err) {
         clearTimeout(timer);
         console.error('[surprise]', err?.message ?? err);
-        body.innerHTML = `<button class="surprise-btn" id="surpriseBtn" type="button">Try again <span>→</span></button>`;
-        attachSurpriseBtn();
+        document.getElementById('spCards').innerHTML = '';
+        setSurpriseReady('Try again');
       } finally {
         surpriseRunning = false;
       }
     }
 
-    function renderSurpriseCards(shows, body) {
+    function renderSurpriseCards(shows) {
       const cards = shows.map((s, i) => {
         const hp = s.poster && s.poster.startsWith('http');
         return `
@@ -1163,33 +1194,17 @@
             <div class="sp-meta">${escHtml(s.format ?? '')}${s.imdbRating ? ` · ★ ${escHtml(s.imdbRating)}` : ''}</div>
           </div>`;
       }).join('');
-
-      body.innerHTML = `
-        <div class="sp-cards" id="spCards">${cards}</div>
-        <div class="sp-footer">
-          <button class="sp-refresh" id="spRefresh" aria-label="Refresh picks">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-            </svg>
-          </button>
-        </div>`;
-
+      document.getElementById('spCards').innerHTML = cards;
       document.getElementById('spCards').addEventListener('click', e => {
         const card = e.target.closest('.sp-card');
-        if (!card) return;
-        submitMood(`Movies and shows like "${card.dataset.title}"`);
-      });
-
-      document.getElementById('spRefresh').addEventListener('click', () => {
-        const b = document.getElementById('surpriseBody');
-        b.innerHTML = `<button class="surprise-btn" id="surpriseBtn" type="button">Surprise me <span>→</span></button>`;
-        attachSurpriseBtn();
-        loadSurprise();
-      });
+        if (card) submitMood(`Movies and shows like "${card.dataset.title}"`);
+      }, { once: true });
     }
 
-    attachSurpriseBtn();
+    document.getElementById('surpriseBtn').addEventListener('click', loadSurprise);
+
+    // Auto-load on page open
+    loadSurprise();
 
     /* ── Rotating placeholder ── */
     const PLACEHOLDERS = [
